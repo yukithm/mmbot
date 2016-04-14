@@ -4,6 +4,8 @@ import (
 	"log"
 	"mmbot/mmhook"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 type Robot struct {
@@ -64,7 +66,7 @@ func (r *Robot) handle(inMsg *mmhook.InMessage) {
 }
 
 func (r *Robot) startServer() {
-	mux := http.NewServeMux()
+	mux := mux.NewRouter()
 	r.mountClient(mux)
 
 	// TODO: mount http handler
@@ -75,7 +77,7 @@ func (r *Robot) startServer() {
 	}
 }
 
-func (r *Robot) mountClient(mux *http.ServeMux) {
+func (r *Robot) mountClient(mux *mux.Router) {
 	path := r.Client.IncomingPath
 	if path == "" {
 		path = "/"
