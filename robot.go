@@ -3,6 +3,7 @@ package mmbot
 import (
 	"log"
 	"mmbot/mmhook"
+	"net/http"
 )
 
 type Robot struct {
@@ -60,4 +61,24 @@ func (r *Robot) handle(inMsg *mmhook.InMessage) {
 			}
 		}
 	}
+}
+
+func (r *Robot) startServer() {
+	mux := http.NewServeMux()
+	r.mountClient(mux)
+
+	// TODO: mount http handler
+
+	log.Printf("Listening on %s\n", r.Address())
+	if err := http.ListenAndServe(r.Address(), mux); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (r *Robot) mountClient(mux *http.ServeMux) {
+	url := r.Client.IncomingURL
+	if url == "" {
+		url = "/"
+	}
+	mux.Handle(url, r.Client)
 }
