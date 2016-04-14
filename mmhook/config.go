@@ -4,8 +4,8 @@ import "fmt"
 
 // Config for mattermost client.
 type Config struct {
-	URL                string // URL for incoming webhook on Mattermost
-	IncomingURL        string // URL for outgoing webhook from Mattermost
+	OutgoingURL        string // URL for incoming webhook on Mattermost
+	IncomingPath       string // Path for outgoing webhook from Mattermost
 	BindAddress        string // Bind address to listen on
 	Port               int    // Port to listen on
 	Token              string // Token from Mattermost

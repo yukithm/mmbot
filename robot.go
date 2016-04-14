@@ -76,9 +76,9 @@ func (r *Robot) startServer() {
 }
 
 func (r *Robot) mountClient(mux *http.ServeMux) {
-	url := r.Client.IncomingURL
-	if url == "" {
-		url = "/"
+	path := r.Client.IncomingPath
+	if path == "" {
+		path = "/"
 	}
-	mux.Handle(url, r.Client)
+	mux.Handle(path, r.Client)
 }

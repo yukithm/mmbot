@@ -45,7 +45,7 @@ func (c *Client) Send(msg *OutMessage) error {
 		return err
 	}
 
-	res, err := c.http.Post(c.URL, "application/json", bytes.NewReader(buf))
+	res, err := c.http.Post(c.OutgoingURL, "application/json", bytes.NewReader(buf))
 	if err != nil {
 		return err
 	}
@@ -73,12 +73,12 @@ func (c *Client) StartServer() {
 }
 
 func (c *Client) startServer() {
-	url := c.IncomingURL
-	if url == "" {
-		url = "/"
+	path := c.IncomingPath
+	if path == "" {
+		path = "/"
 	}
 	mux := http.NewServeMux()
-	mux.Handle(url, c)
+	mux.Handle(path, c)
 	log.Printf("Listening on %s\n", c.Address())
 	if err := http.ListenAndServe(c.Address(), mux); err != nil {
 		log.Fatal(err)
