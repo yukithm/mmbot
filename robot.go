@@ -12,6 +12,7 @@ type Robot struct {
 	*mmhook.Client
 	Config   *Config
 	Handlers []Handler
+	Routes   []Route
 	quit     chan bool
 }
 
@@ -67,9 +68,8 @@ func (r *Robot) handle(inMsg *mmhook.InMessage) {
 
 func (r *Robot) startServer() {
 	mux := mux.NewRouter()
+	r.mountRoutes(mux)
 	r.mountClient(mux)
-
-	// TODO: mount http handler
 
 	log.Printf("Listening on %s\n", r.Address())
 	if err := http.ListenAndServe(r.Address(), mux); err != nil {
@@ -83,4 +83,26 @@ func (r *Robot) mountClient(mux *mux.Router) {
 		path = "/"
 	}
 	mux.Handle(path, r.Client)
+}
+
+func (r *Robot) mountRoutes(mux *mux.Router) {
+	for _, route := range r.Routes {
+		if route.Pattern == "" || route.Action == nil {
+			log.Fatalf("Invalid route: %v", route)
+		}
+		mr := mux.HandleFunc(route.Pattern, r.wrapRouteAction(&route))
+		if route.Methods != nil && len(route.Methods) > 0 {
+			mr.Methods(route.Methods...)
+		}
+	}
+}
+
+func (r *Robot) wrapRouteAction(route *Route) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		route.Action(r, w, req)
+	}
+}
+
+func (r *Robot) RouteVars(req *http.Request) map[string]string {
+	return mux.Vars(req)
 }
