@@ -15,7 +15,7 @@ func loadConfig(c *cli.Context) (*Config, error) {
 	if file == "" {
 		file = findConfigFile(c.App.Name)
 		if file == "" {
-			return DefaultConfig(), nil
+			return &Config{}, nil
 		}
 	}
 
@@ -29,7 +29,7 @@ func loadConfig(c *cli.Context) (*Config, error) {
 }
 
 func findConfigFile(appName string) string {
-	filename := appName + ".yml"
+	filename := appName + ".toml"
 
 	// current directory
 	if dir, err := os.Getwd(); err == nil {

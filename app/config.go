@@ -8,59 +8,46 @@ import (
 	"mmbot/mmhook"
 	"os"
 
-	"gopkg.in/yaml.v2"
+	"github.com/naoina/toml"
 )
 
 // MattermostConfig is the configuration for mattermost.
 type MattermostConfig struct {
-	OutgoingURL        string `yaml:"outgoing_url"`
-	IncomingPath       string `yaml:"incoming_path"`
-	Token              string `yaml:"token"`
-	UserName           string `yaml:"username"`
-	OverrideUserName   string `yaml:"override_username"`
-	IconURL            string `yaml:"icon_url"`
-	InsecureSkipVerify bool   `yaml:"insecure_skip_verify"`
+	OutgoingURL        string `toml:"outgoing_url"`
+	IncomingPath       string `toml:"incoming_path"`
+	Token              string `toml:"token"`
+	UserName           string `toml:"username"`
+	OverrideUserName   string `toml:"override_username"`
+	IconURL            string `toml:"icon_url"`
+	InsecureSkipVerify bool   `toml:"insecure_skip_verify"`
 }
 
 // ServerConfig is the configration for the bot HTTP server.
 type ServerConfig struct {
-	Enable      bool   `yaml:"enable"`
-	BindAddress string `yaml:"bind_address"`
-	Port        int    `yaml:port`
+	Enable      bool   `toml:"enable"`
+	BindAddress string `toml:"bind_address"`
+	Port        int    `toml:"port"`
 }
 
 // Config is the configuration of the application.
 type Config struct {
-	Mattermost MattermostConfig
-	Server     ServerConfig
-}
-
-func DefaultConfig() *Config {
-	return &Config{
-		Mattermost: MattermostConfig{
-			IncomingPath: "/",
-		},
-		Server: ServerConfig{
-			Enable:      true,
-			BindAddress: "",
-			Port:        8080,
-		},
-	}
+	Mattermost MattermostConfig `toml:"mattermost"`
+	Server     ServerConfig     `toml:"server"`
 }
 
 // LoadConfigFile loads configuration file and returns Config.
 func LoadConfigFile(filename string) (*Config, error) {
-	config := DefaultConfig()
+	var config Config
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	err = yaml.Unmarshal(buf, config)
+	err = toml.Unmarshal(buf, &config)
 	if err != nil {
 		return nil, err
 	}
 
-	return config, nil
+	return &config, nil
 }
 
 // Validate validates configuration values.
