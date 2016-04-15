@@ -6,14 +6,17 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/robfig/cron"
 )
 
 type Robot struct {
 	*mmhook.Client
-	Config   *Config
-	Handlers []Handler
-	Routes   []Route
-	quit     chan bool
+	Config    *Config
+	Handlers  []Handler
+	Routes    []Route
+	Jobs      []Job
+	scheduler *cron.Cron
+	quit      chan bool
 }
 
 func NewRobot(config *Config) *Robot {
@@ -32,6 +35,11 @@ func (r *Robot) Run() {
 		r.receive()
 	} else {
 		<-r.quit
+	}
+
+	if r.scheduler != nil {
+		r.scheduler.Stop()
+		log.Println("Stop job scheduler")
 	}
 }
 
@@ -64,6 +72,21 @@ func (r *Robot) handle(inMsg *mmhook.InMessage) {
 			}
 		}
 	}
+}
+
+func (r *Robot) startScheduler() {
+	if r.Jobs == nil || len(r.Jobs) == 0 {
+		return
+	}
+
+	r.scheduler = cron.New()
+	for _, job := range r.Jobs {
+		r.scheduler.AddFunc(job.Schedule, func() {
+			job.Action(r)
+		})
+	}
+	r.scheduler.Start()
+	log.Println("Start job scheduler")
 }
 
 func (r *Robot) startServer() {
