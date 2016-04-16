@@ -19,12 +19,12 @@ type PatternHandler struct {
 	Action      HandlerAction
 }
 
-func (h *PatternHandler) CanHandle(msg *message.InMessage) bool {
+func (h PatternHandler) CanHandle(msg *message.InMessage) bool {
 	_, ok := h.matchPattern(msg)
 	return ok
 }
 
-func (h *PatternHandler) Handle(msg *message.InMessage) error {
+func (h PatternHandler) Handle(msg *message.InMessage) error {
 	matches, ok := h.matchPattern(msg)
 	if !ok {
 		return fmt.Errorf("Cannot handle message: %#v", msg)
@@ -38,7 +38,7 @@ func (h *PatternHandler) Handle(msg *message.InMessage) error {
 	return nil
 }
 
-func (h *PatternHandler) matchPattern(msg *message.InMessage) ([]string, bool) {
+func (h PatternHandler) matchPattern(msg *message.InMessage) ([]string, bool) {
 	if !h.matchMessageType(msg.Type) {
 		return nil, false
 	}
@@ -63,14 +63,14 @@ func (h *PatternHandler) matchPattern(msg *message.InMessage) ([]string, bool) {
 	return matches, true
 }
 
-func (h *PatternHandler) matchMessageType(t message.Type) bool {
+func (h PatternHandler) matchMessageType(t message.Type) bool {
 	if h.MessageType == 0 {
 		return true
 	}
 	return t&h.MessageType != 0
 }
 
-func (h *PatternHandler) trimBotName(text string, name string) string {
+func (h PatternHandler) trimBotName(text string, name string) string {
 	pattern := fmt.Sprintf(`\A@?(?:%s)\s*[:,]?\s+`, regexp.QuoteMeta(name))
 	re := regexp.MustCompile(pattern)
 	if loc := re.FindStringIndex(text); loc != nil {
