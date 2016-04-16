@@ -1,6 +1,10 @@
 package mmbot
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/fukata/golang-stats-api-handler"
+)
 
 // RouteHandlerFunc is route action function.
 type RouteHandlerFunc func(*Robot, http.ResponseWriter, *http.Request)
@@ -18,4 +22,26 @@ type Route struct {
 
 	// Route action.
 	Action RouteHandlerFunc
+}
+
+// NewPingRoute returns the route "ping".
+func NewPingRoute(pattern string) Route {
+	return Route{
+		Methods: []string{"GET"},
+		Pattern: pattern,
+		Action: func(bot *Robot, w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("pong"))
+		},
+	}
+}
+
+// NewStatsRoute returns the route for statistics of the process.
+func NewStatsRoute(pattern string) Route {
+	return Route{
+		Methods: []string{"GET"},
+		Pattern: pattern,
+		Action: func(bot *Robot, w http.ResponseWriter, r *http.Request) {
+			stats_api.Handler(w, r)
+		},
+	}
 }
