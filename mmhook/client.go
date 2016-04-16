@@ -33,6 +33,7 @@ func NewClient(config *adapter.Config, logger *log.Logger) *Client {
 		config: config,
 		logger: logger,
 		in:     make(chan message.InMessage),
+		quit:   make(chan bool),
 	}
 	if config.InsecureSkipVerify {
 		tr := &http.Transport{
@@ -51,6 +52,7 @@ func NewClient(config *adapter.Config, logger *log.Logger) *Client {
 // Run starts the communication with Mattermost and blocks until stopped.
 func (c *Client) Run() error {
 	<-c.quit
+	close(c.quit)
 	return nil
 }
 

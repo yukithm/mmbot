@@ -2,6 +2,10 @@ package app
 
 import (
 	"fmt"
+	"mmbot"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/codegangsta/cli"
 )
@@ -62,7 +66,25 @@ func (app *App) newRunCommand() cli.Command {
 func (app *App) runCommand(c *cli.Context) {
 	app.updateConfigByFlags(c)
 	app.Config.ValidateAndExitOnError()
-	fmt.Printf("%#v\n", app.Config)
+
+	robot := mmbot.NewRobot(app.Config.RobotConfig())
+
+	sigCh := make(chan os.Signal)
+	signal.Notify(sigCh,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+
+	fmt.Printf("PID: %d\n", os.Getpid())
+	go func() {
+		s := <-sigCh
+		app.Config.Logger.Printf("%q received", s)
+		robot.Stop()
+	}()
+
+	robot.Run()
+	app.Config.Logger.Println("Stop robot")
 }
 
 func (app *App) updateConfigByFlags(c *cli.Context) {

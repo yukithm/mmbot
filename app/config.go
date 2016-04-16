@@ -33,6 +33,7 @@ type ServerConfig struct {
 type Config struct {
 	Mattermost MattermostConfig `toml:"mattermost"`
 	Server     ServerConfig     `toml:"server"`
+	Logger     *log.Logger      `toml:"-"`
 }
 
 // LoadConfigFile loads configuration file and returns Config.
@@ -95,6 +96,7 @@ func (c *Config) RobotConfig() *mmbot.Config {
 		BindAddress:   c.Server.BindAddress,
 		Port:          c.Server.Port,
 		DisableServer: !c.Server.Enable,
+		Logger:        c.Logger,
 		AdapterConfig: c.AdapterConfig(),
 	}
 }

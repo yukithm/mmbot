@@ -1,12 +1,12 @@
 package mmbot
 
 import (
+	"io/ioutil"
 	"log"
 	"mmbot/adapter"
 	"mmbot/message"
 	"mmbot/mmhook"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/robfig/cron"
@@ -24,11 +24,13 @@ type Robot struct {
 }
 
 func NewRobot(config *Config) *Robot {
-	logger := log.New(os.Stderr, "", log.LstdFlags)
+	if config.Logger == nil {
+		config.Logger = log.New(ioutil.Discard, "", 0)
+	}
 	bot := &Robot{
 		Config: config,
-		Client: mmhook.NewClient(config.AdapterConfig, logger),
-		logger: logger,
+		Client: mmhook.NewClient(config.AdapterConfig, config.Logger),
+		logger: config.Logger,
 		quit:   make(chan bool),
 	}
 
@@ -65,7 +67,7 @@ func (r *Robot) runLoop() {
 }
 
 func (r *Robot) Stop() {
-	r.Client.Stop()
+	r.quit <- true
 }
 
 func (r *Robot) Send(msg *message.OutMessage) error {
@@ -94,7 +96,7 @@ func (r *Robot) startClient() {
 	if err != nil {
 		r.logger.Print(err)
 	}
-	r.quit <- true
+	r.Stop()
 }
 
 func (r *Robot) startScheduler() {
@@ -121,7 +123,7 @@ func (r *Robot) startServer() {
 	if err := http.ListenAndServe(r.Config.Address(), mux); err != nil {
 		r.logger.Fatal(err)
 	}
-	r.quit <- true
+	r.Stop()
 }
 
 func (r *Robot) mountClient(mux *mux.Router) {

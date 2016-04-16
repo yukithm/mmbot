@@ -2,6 +2,7 @@ package mmbot
 
 import (
 	"fmt"
+	"log"
 	"mmbot/adapter"
 )
 
@@ -11,6 +12,7 @@ type Config struct {
 	BindAddress   string // Bind address to listen on
 	Port          int    // Port to listen on
 	DisableServer bool   // Disable HTTP server
+	Logger        *log.Logger
 	AdapterConfig *adapter.Config
 }
 
