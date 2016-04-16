@@ -11,6 +11,7 @@ import (
 	"mmbot/adapter"
 	"mmbot/message"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/schema"
 )
@@ -20,6 +21,7 @@ type Client struct {
 	config *adapter.Config
 	logger *log.Logger
 	http   *http.Client
+	tokens map[string]int
 	in     chan message.InMessage
 	quit   chan bool
 }
@@ -44,6 +46,15 @@ func NewClient(config *adapter.Config, logger *log.Logger) *Client {
 		c.http = &http.Client{Transport: tr}
 	} else {
 		c.http = &http.Client{}
+	}
+
+	// build token lookup table
+	c.tokens = make(map[string]int, len(config.Tokens))
+	for i, token := range config.Tokens {
+		token = strings.TrimSpace(token)
+		if token != "" {
+			c.tokens[token] = i
+		}
 	}
 
 	return c
@@ -122,12 +133,12 @@ func (c *Client) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if c.config.Token != "" {
+	if len(c.tokens) > 0 {
 		if msg.Token == "" {
 			c.logger.Printf("No token request from %q", r.RemoteAddr)
 			http.Error(w, "401 Unauthorized", http.StatusUnauthorized)
 			return
-		} else if msg.Token != c.config.Token {
+		} else if !c.validToken(msg.Token) {
 			c.logger.Printf("Invalid token %q request from %q", msg.Token, r.RemoteAddr)
 			http.Error(w, "401 Unauthorized", http.StatusUnauthorized)
 			return
@@ -136,6 +147,11 @@ func (c *Client) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	im := translateInMessage(&msg)
 	c.in <- *im
+}
+
+func (c *Client) validToken(token string) bool {
+	_, ok := c.tokens[token]
+	return ok
 }
 
 func decodeForm(msg *InMessage, r *http.Request) error {

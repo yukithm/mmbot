@@ -13,13 +13,13 @@ import (
 
 // MattermostConfig is the configuration for mattermost.
 type MattermostConfig struct {
-	OutgoingURL        string `toml:"outgoing_url"`
-	IncomingPath       string `toml:"incoming_path"`
-	Token              string `toml:"token"`
-	UserName           string `toml:"username"`
-	OverrideUserName   string `toml:"override_username"`
-	IconURL            string `toml:"icon_url"`
-	InsecureSkipVerify bool   `toml:"insecure_skip_verify"`
+	OutgoingURL        string   `toml:"outgoing_url"`
+	IncomingPath       string   `toml:"incoming_path"`
+	Tokens             []string `toml:"tokens"`
+	UserName           string   `toml:"username"`
+	OverrideUserName   string   `toml:"override_username"`
+	IconURL            string   `toml:"icon_url"`
+	InsecureSkipVerify bool     `toml:"insecure_skip_verify"`
 }
 
 // ServerConfig is the configration for the bot HTTP server.
@@ -82,7 +82,7 @@ func (c *Config) AdapterConfig() *adapter.Config {
 	return &adapter.Config{
 		OutgoingURL:        c.Mattermost.OutgoingURL,
 		IncomingPath:       c.Mattermost.IncomingPath,
-		Token:              c.Mattermost.Token,
+		Tokens:             c.Mattermost.Tokens,
 		OverrideUserName:   c.Mattermost.OverrideUserName,
 		IconURL:            c.Mattermost.IconURL,
 		InsecureSkipVerify: c.Mattermost.InsecureSkipVerify,

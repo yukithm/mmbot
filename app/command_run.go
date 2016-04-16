@@ -25,9 +25,9 @@ func (app *App) newRunCommand() cli.Command {
 				Value: "/",
 				Usage: "webhook path from Mattermost (Outgoing Webhooks on Mattermost side)",
 			},
-			cli.StringFlag{
-				Name:  "token",
-				Usage: "toke from Mattermost outgoing webhooks",
+			cli.StringSliceFlag{
+				Name:  "tokens",
+				Usage: "tokens from Mattermost outgoing webhooks",
 			},
 			cli.StringFlag{
 				Name:  "username",
@@ -97,8 +97,8 @@ func (app *App) updateConfigByFlags(c *cli.Context) {
 	if c.IsSet("incoming-path") {
 		app.Config.Mattermost.IncomingPath = c.String("incoming-path")
 	}
-	if c.IsSet("token") {
-		app.Config.Mattermost.Token = c.String("token")
+	if c.IsSet("tokens") {
+		app.Config.Mattermost.Tokens = c.StringSlice("token")
 	}
 	if c.IsSet("username") {
 		app.Config.Mattermost.UserName = c.String("username")
