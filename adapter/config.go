@@ -1,6 +1,6 @@
-package mmhook
+package adapter
 
-// Config for mattermost client.
+// Config for an adapter.
 type Config struct {
 	OutgoingURL        string // URL for incoming webhook on Mattermost
 	IncomingPath       string // Path for outgoing webhook from Mattermost

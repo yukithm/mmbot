@@ -17,7 +17,7 @@ import (
 
 // Client is a client for Mattermost.
 type Client struct {
-	config *Config
+	config *adapter.Config
 	logger *log.Logger
 	http   *http.Client
 	in     chan message.InMessage
@@ -25,7 +25,7 @@ type Client struct {
 }
 
 // NewClient returns new mattermost webhook client.
-func NewClient(config *Config, logger *log.Logger) *Client {
+func NewClient(config *adapter.Config, logger *log.Logger) *Client {
 	if logger == nil {
 		logger = log.New(ioutil.Discard, "", 0)
 	}

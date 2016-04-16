@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"mmbot"
-	"mmbot/mmhook"
+	"mmbot/adapter"
 	"os"
 
 	"github.com/naoina/toml"
@@ -77,8 +77,8 @@ func (c *Config) ValidateAndExitOnError() {
 }
 
 // AdapterConfig returns mmhook.Config.
-func (c *Config) AdapterConfig() *mmhook.Config {
-	return &mmhook.Config{
+func (c *Config) AdapterConfig() *adapter.Config {
+	return &adapter.Config{
 		OutgoingURL:        c.Mattermost.OutgoingURL,
 		IncomingPath:       c.Mattermost.IncomingPath,
 		Token:              c.Mattermost.Token,

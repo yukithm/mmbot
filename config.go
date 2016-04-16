@@ -2,15 +2,16 @@ package mmbot
 
 import (
 	"fmt"
-	"mmbot/mmhook"
+	"mmbot/adapter"
 )
 
+// Config for the robot.
 type Config struct {
 	UserName      string // Bot account name
 	BindAddress   string // Bind address to listen on
 	Port          int    // Port to listen on
 	DisableServer bool   // Disable HTTP server
-	AdapterConfig *mmhook.Config
+	AdapterConfig *adapter.Config
 }
 
 // Address returns bind address and port string.
