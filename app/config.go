@@ -76,14 +76,14 @@ func (c *Config) ValidateAndExitOnError() {
 	}
 }
 
-// ClientConfig returns mmhook.Config.
-func (c *Config) ClientConfig() *mmhook.Config {
+// AdapterConfig returns mmhook.Config.
+func (c *Config) AdapterConfig() *mmhook.Config {
 	return &mmhook.Config{
 		OutgoingURL:        c.Mattermost.OutgoingURL,
 		IncomingPath:       c.Mattermost.IncomingPath,
-		BindAddress:        c.Server.BindAddress,
-		Port:               c.Server.Port,
 		Token:              c.Mattermost.Token,
+		OverrideUserName:   c.Mattermost.OverrideUserName,
+		IconURL:            c.Mattermost.IconURL,
 		InsecureSkipVerify: c.Mattermost.InsecureSkipVerify,
 	}
 }
@@ -91,10 +91,10 @@ func (c *Config) ClientConfig() *mmhook.Config {
 // RobotConfig returns mmbot.Config.
 func (c *Config) RobotConfig() *mmbot.Config {
 	return &mmbot.Config{
-		Config:           c.ClientConfig(),
-		UserName:         c.Mattermost.UserName,
-		OverrideUserName: c.Mattermost.OverrideUserName,
-		IconURL:          c.Mattermost.IconURL,
-		DisableServer:    !c.Server.Enable,
+		UserName:      c.Mattermost.UserName,
+		BindAddress:   c.Server.BindAddress,
+		Port:          c.Server.Port,
+		DisableServer: !c.Server.Enable,
+		AdapterConfig: c.AdapterConfig(),
 	}
 }

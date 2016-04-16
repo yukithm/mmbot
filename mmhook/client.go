@@ -8,6 +8,8 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"mmbot/adapter"
+	"mmbot/message"
 	"net/http"
 
 	"github.com/gorilla/schema"
@@ -15,20 +17,28 @@ import (
 
 // Client is a client for Mattermost.
 type Client struct {
-	*Config
-	http *http.Client
-	In   chan InMessage
+	config *Config
+	logger *log.Logger
+	http   *http.Client
+	in     chan message.InMessage
+	quit   chan bool
 }
 
-// NewClient returns new mattermost client.
-func NewClient(config *Config) *Client {
+// NewClient returns new mattermost webhook client.
+func NewClient(config *Config, logger *log.Logger) *Client {
+	if logger == nil {
+		logger = log.New(ioutil.Discard, "", 0)
+	}
 	c := &Client{
-		Config: config,
-		In:     make(chan InMessage),
+		config: config,
+		logger: logger,
+		in:     make(chan message.InMessage),
 	}
 	if config.InsecureSkipVerify {
 		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.InsecureSkipVerify},
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: config.InsecureSkipVerify,
+			},
 		}
 		c.http = &http.Client{Transport: tr}
 	} else {
@@ -38,14 +48,34 @@ func NewClient(config *Config) *Client {
 	return c
 }
 
+// Run starts the communication with Mattermost and blocks until stopped.
+func (c *Client) Run() error {
+	<-c.quit
+	return nil
+}
+
+// Stop terminates the communication.
+func (c *Client) Stop() error {
+	c.quit <- true
+	return nil
+}
+
 // Send sends a message to Mattermost.
-func (c *Client) Send(msg *OutMessage) error {
+func (c *Client) Send(msg *message.OutMessage) error {
+	om := translateOutMessage(msg)
+	if c.config.OverrideUserName != "" && om.UserName == "" {
+		om.UserName = c.config.OverrideUserName
+	}
+	if c.config.IconURL != "" && om.IconURL == "" {
+		om.IconURL = c.config.IconURL
+	}
+
 	buf, err := json.Marshal(msg)
 	if err != nil {
 		return err
 	}
 
-	res, err := c.http.Post(c.OutgoingURL, "application/json", bytes.NewReader(buf))
+	res, err := c.http.Post(c.config.OutgoingURL, "application/json", bytes.NewReader(buf))
 	if err != nil {
 		return err
 	}
@@ -60,28 +90,16 @@ func (c *Client) Send(msg *OutMessage) error {
 	return nil
 }
 
-// Receive receives a message from Mattermost.
-func (c *Client) Receive() *InMessage {
-	msg := <-c.In
-	return &msg
+// Receiver returns a channel that receives messages from chat service.
+func (c *Client) Receiver() chan message.InMessage {
+	return c.in
 }
 
-// StartServer runs HTTP server for incoming messages.
-// (from Mattermost outgoing webhook)
-func (c *Client) StartServer() {
-	go c.startServer()
-}
-
-func (c *Client) startServer() {
-	path := c.IncomingPath
-	if path == "" {
-		path = "/"
-	}
-	mux := http.NewServeMux()
-	mux.Handle(path, c)
-	log.Printf("Listening on %s\n", c.Address())
-	if err := http.ListenAndServe(c.Address(), mux); err != nil {
-		log.Fatal(err)
+// IncomingWebHook returns webhook. It will be disabled if nil.
+func (c *Client) IncomingWebHook() *adapter.IncomingWebHook {
+	return &adapter.IncomingWebHook{
+		Path:    c.config.IncomingPath,
+		Handler: c.ServeHTTP,
 	}
 }
 
@@ -89,7 +107,7 @@ func (c *Client) startServer() {
 // ServeHTTP receives a message from Mattermost outgoing webhook.
 func (c *Client) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
-		log.Printf("Invalid %q request from %q", r.Method, r.RemoteAddr)
+		c.logger.Printf("Invalid %q request from %q", r.Method, r.RemoteAddr)
 		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -97,24 +115,25 @@ func (c *Client) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	msg := InMessage{}
 	if err := decodeForm(&msg, r); err != nil {
-		log.Printf("Invalid form data: %v", err)
+		c.logger.Printf("Invalid form data: %v", err)
 		http.NotFound(w, r)
 		return
 	}
 
-	if c.Token != "" {
+	if c.config.Token != "" {
 		if msg.Token == "" {
-			log.Printf("No token request from %q", r.RemoteAddr)
+			c.logger.Printf("No token request from %q", r.RemoteAddr)
 			http.Error(w, "401 Unauthorized", http.StatusUnauthorized)
 			return
-		} else if msg.Token != c.Token {
-			log.Printf("Invalid token %q request from %q", msg.Token, r.RemoteAddr)
+		} else if msg.Token != c.config.Token {
+			c.logger.Printf("Invalid token %q request from %q", msg.Token, r.RemoteAddr)
 			http.Error(w, "401 Unauthorized", http.StatusUnauthorized)
 			return
 		}
 	}
 
-	c.In <- msg
+	im := translateInMessage(&msg)
+	c.in <- *im
 }
 
 func decodeForm(msg *InMessage, r *http.Request) error {

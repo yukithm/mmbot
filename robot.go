@@ -2,27 +2,33 @@ package mmbot
 
 import (
 	"log"
+	"mmbot/adapter"
+	"mmbot/message"
 	"mmbot/mmhook"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/robfig/cron"
 )
 
 type Robot struct {
-	*mmhook.Client
 	Config    *Config
+	Client    adapter.Adapter
 	Handlers  []Handler
 	Routes    []Route
 	Jobs      []Job
 	scheduler *cron.Cron
+	logger    *log.Logger
 	quit      chan bool
 }
 
 func NewRobot(config *Config) *Robot {
+	logger := log.New(os.Stderr, "", log.LstdFlags)
 	bot := &Robot{
-		Client: mmhook.NewClient(config.Config),
 		Config: config,
+		Client: mmhook.NewClient(config.AdapterConfig, logger),
+		logger: logger,
 		quit:   make(chan bool),
 	}
 
@@ -30,48 +36,65 @@ func NewRobot(config *Config) *Robot {
 }
 
 func (r *Robot) Run() {
-	if !r.Config.DisableServer {
-		r.StartServer()
-		r.receive()
-	} else {
-		<-r.quit
-	}
+	r.runLoop()
+
+	r.Client.Stop()
+	r.logger.Println("Stop adapter")
 
 	if r.scheduler != nil {
 		r.scheduler.Stop()
-		log.Println("Stop job scheduler")
+		r.logger.Println("Stop job scheduler")
 	}
 }
 
-func (r *Robot) Stop() {
-	r.quit <- true
-}
+func (r *Robot) runLoop() {
+	if !r.Config.DisableServer {
+		go r.startServer()
+	}
+	go r.startClient()
 
-func (r *Robot) receive() {
+	receiver := r.Client.Receiver()
 	for {
 		select {
 		case <-r.quit:
 			return
-		case msg := <-r.In:
+		case msg := <-receiver:
 			r.handle(&msg)
 		}
 	}
 }
 
-func (r *Robot) handle(inMsg *mmhook.InMessage) {
-	msg := &InMessage{
-		InMessage: inMsg,
-		Robot:     r,
-	}
+func (r *Robot) Stop() {
+	r.Client.Stop()
+}
+
+func (r *Robot) Send(msg *message.OutMessage) error {
+	return r.Client.Send(msg)
+}
+
+func (r *Robot) SenderName() string {
+	return r.Config.UserName
+}
+
+func (r *Robot) handle(msg *message.InMessage) {
+	msg.Sender = r
 
 	for _, handler := range r.Handlers {
 		if handler.CanHandle(msg) {
 			err := handler.Handle(msg)
 			if err != nil {
-				log.Print(err)
+				r.logger.Print(err)
 			}
 		}
 	}
+}
+
+func (r *Robot) startClient() {
+	err := r.Client.Run()
+	if err != nil {
+		r.logger.Print(err)
+	}
+	r.quit <- true
 }
 
 func (r *Robot) startScheduler() {
@@ -86,7 +109,7 @@ func (r *Robot) startScheduler() {
 		})
 	}
 	r.scheduler.Start()
-	log.Println("Start job scheduler")
+	r.logger.Println("Start job scheduler")
 }
 
 func (r *Robot) startServer() {
@@ -94,18 +117,24 @@ func (r *Robot) startServer() {
 	r.mountRoutes(mux)
 	r.mountClient(mux)
 
-	log.Printf("Listening on %s\n", r.Address())
-	if err := http.ListenAndServe(r.Address(), mux); err != nil {
-		log.Fatal(err)
+	r.logger.Printf("Listening on %s\n", r.Config.Address())
+	if err := http.ListenAndServe(r.Config.Address(), mux); err != nil {
+		r.logger.Fatal(err)
 	}
+	r.quit <- true
 }
 
 func (r *Robot) mountClient(mux *mux.Router) {
-	path := r.Client.IncomingPath
+	hook := r.Client.IncomingWebHook()
+	if hook == nil {
+		return
+	}
+
+	path := hook.Path
 	if path == "" {
 		path = "/"
 	}
-	mux.Handle(path, r.Client)
+	mux.Handle(path, hook.Handler)
 }
 
 func (r *Robot) mountRoutes(mux *mux.Router) {

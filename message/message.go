@@ -1,10 +1,14 @@
-package mmbot
+package message
 
 import (
-	"mmbot/mmhook"
 	"regexp"
 	"strings"
 )
+
+type Sender interface {
+	Send(*OutMessage) error
+	SenderName() string
+}
 
 type MessageType uint
 
@@ -16,11 +20,28 @@ const (
 	// CommandMessage
 )
 
-// InMessage represents incoming message.
+// InMessage represents an incoming message.
 type InMessage struct {
-	*mmhook.InMessage          // incoming message
-	Matches           []string // captured strings in the pattern
-	Robot             *Robot   // robot
+	Sender      Sender
+	Matches     []string // captured strings in the pattern
+	Type        MessageType
+	ChannelID   string
+	ChannelName string
+	UserID      string
+	UserName    string
+	Text        string
+	RawMessage  interface{} // adapter's raw message data
+}
+
+// OutMessage represents an outgoing message.
+type OutMessage struct {
+	ChannelID   string
+	ChannelName string
+	UserName    string
+	IconURL     string
+	Text        string
+	InReplyTo   *InMessage // reply target message
+	TriggeredBy *InMessage // trigger source message
 }
 
 func (in *InMessage) MessageType() MessageType {
@@ -60,16 +81,13 @@ func (in *InMessage) Reply(text string) error {
 		text = targetUser + " " + text
 	}
 
-	msg := &mmhook.OutMessage{
-		Channel: in.ChannelName,
-		Text:    text,
-	}
-	if in.Robot.Config.OverrideUserName != "" {
-		msg.UserName = in.Robot.Config.OverrideUserName
-	}
-	if in.Robot.Config.IconURL != "" {
-		msg.IconURL = in.Robot.Config.IconURL
+	msg := &OutMessage{
+		ChannelID:   in.ChannelID,
+		ChannelName: in.ChannelName,
+		Text:        text,
+		InReplyTo:   in,
+		TriggeredBy: in,
 	}
 
-	return in.Robot.Send(msg)
+	return in.Sender.Send(msg)
 }
