@@ -3,7 +3,7 @@ package mmbot
 import "net/http"
 
 // RouteHandlerFunc is route action function.
-type RouteHandlerFunc func(*Robot, http.ResponseWriter, *http.Request) error
+type RouteHandlerFunc func(*Robot, http.ResponseWriter, *http.Request)
 
 // Route is a HTTP route.
 type Route struct {
