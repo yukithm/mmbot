@@ -144,14 +144,16 @@ func (r *Robot) mountRoutes(mux *mux.Router) {
 		if route.Pattern == "" || route.Action == nil {
 			log.Fatalf("Invalid route: %v", route)
 		}
-		mr := mux.HandleFunc(route.Pattern, r.wrapRouteAction(&route))
+
+		wrapped := r.wrapRouteAction(route)
+		mr := mux.HandleFunc(route.Pattern, wrapped)
 		if route.Methods != nil && len(route.Methods) > 0 {
 			mr.Methods(route.Methods...)
 		}
 	}
 }
 
-func (r *Robot) wrapRouteAction(route *Route) func(http.ResponseWriter, *http.Request) {
+func (r *Robot) wrapRouteAction(route Route) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		route.Action(r, w, req)
 	}
