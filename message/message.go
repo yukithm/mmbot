@@ -10,11 +10,11 @@ type Sender interface {
 	SenderName() string
 }
 
-type MessageType uint
+type Type uint
 
 const (
-	UnknownMessage MessageType = 0
-	PublicMessage  MessageType = 1 << iota
+	UnknownMessage Type = 0
+	PublicMessage  Type = 1 << iota
 	MentionMessage
 	DirectMessage
 	// CommandMessage
@@ -24,7 +24,7 @@ const (
 type InMessage struct {
 	Sender      Sender
 	Matches     []string // captured strings in the pattern
-	Type        MessageType
+	Type        Type
 	ChannelID   string
 	ChannelName string
 	UserID      string
@@ -42,17 +42,6 @@ type OutMessage struct {
 	Text        string
 	InReplyTo   *InMessage // reply target message
 	TriggeredBy *InMessage // trigger source message
-}
-
-func (in *InMessage) MessageType() MessageType {
-	if strings.HasPrefix(in.ChannelName, "@") {
-		return DirectMessage
-	}
-	if strings.HasPrefix(in.Text, "@") {
-		return MentionMessage
-	}
-
-	return PublicMessage
 }
 
 var mentionNameRegexp = regexp.MustCompile(`\A@([0-9a-zA-Z_]+)`)

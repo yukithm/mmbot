@@ -14,7 +14,7 @@ type Handler interface {
 type HandlerAction func(*message.InMessage) error
 
 type PatternHandler struct {
-	MessageType message.MessageType
+	MessageType message.Type
 	Pattern     *regexp.Regexp
 	Action      HandlerAction
 }
@@ -63,7 +63,7 @@ func (h *PatternHandler) matchPattern(msg *message.InMessage) ([]string, bool) {
 	return matches, true
 }
 
-func (h *PatternHandler) matchMessageType(t message.MessageType) bool {
+func (h *PatternHandler) matchMessageType(t message.Type) bool {
 	if h.MessageType == 0 {
 		return true
 	}

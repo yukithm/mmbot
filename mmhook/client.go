@@ -72,7 +72,7 @@ func (c *Client) Send(msg *message.OutMessage) error {
 		om.IconURL = c.config.IconURL
 	}
 
-	buf, err := json.Marshal(msg)
+	buf, err := json.Marshal(om)
 	if err != nil {
 		return err
 	}

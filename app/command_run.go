@@ -68,6 +68,9 @@ func (app *App) runCommand(c *cli.Context) {
 	app.Config.ValidateAndExitOnError()
 
 	robot := mmbot.NewRobot(app.Config.RobotConfig())
+	robot.Handlers = app.Handlers
+	robot.Routes = app.Routes
+	robot.Jobs = app.Jobs
 
 	sigCh := make(chan os.Signal)
 	signal.Notify(sigCh,

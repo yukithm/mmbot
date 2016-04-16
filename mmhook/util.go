@@ -35,7 +35,7 @@ func translateOutMessage(msg *message.OutMessage) *OutMessage {
 	}
 }
 
-func messageType(msg *InMessage) message.MessageType {
+func messageType(msg *InMessage) message.Type {
 	if strings.HasPrefix(msg.ChannelName, "@") {
 		return message.DirectMessage
 	}

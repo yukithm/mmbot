@@ -2,6 +2,7 @@ package app
 
 import (
 	"log"
+	"mmbot"
 
 	"github.com/codegangsta/cli"
 )
@@ -9,7 +10,10 @@ import (
 // App is a bot application.
 type App struct {
 	*cli.App
-	Config *Config
+	Config   *Config
+	Handlers []mmbot.Handler
+	Routes   []mmbot.Route
+	Jobs     []mmbot.Job
 }
 
 // NewApp creates new App.
