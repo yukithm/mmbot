@@ -10,8 +10,10 @@ import (
 	"log"
 	"mmbot/adapter"
 	"mmbot/message"
+	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gorilla/schema"
 )
@@ -37,16 +39,21 @@ func NewClient(config *adapter.Config, logger *log.Logger) *Client {
 		in:     make(chan message.InMessage),
 		quit:   make(chan bool),
 	}
-	if config.InsecureSkipVerify {
-		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: config.InsecureSkipVerify,
-			},
-		}
-		c.http = &http.Client{Transport: tr}
-	} else {
-		c.http = &http.Client{}
+
+	tr := &http.Transport{
+		Dial: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
 	}
+	if config.InsecureSkipVerify {
+		tr.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: config.InsecureSkipVerify,
+		}
+	}
+	c.http = &http.Client{Transport: tr}
 
 	// build token lookup table
 	c.tokens = make(map[string]int, len(config.Tokens))
@@ -124,7 +131,6 @@ func (c *Client) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	defer r.Body.Close()
 
 	msg := InMessage{}
 	if err := decodeForm(&msg, r); err != nil {

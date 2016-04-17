@@ -7,6 +7,8 @@ import (
 	"mmbot/message"
 	"mmbot/mmhook"
 	"net/http"
+	"runtime"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/robfig/cron"
@@ -120,7 +122,13 @@ func (r *Robot) startServer() {
 	r.mountClient(mux)
 
 	r.logger.Printf("Listening on %s\n", r.Config.Address())
-	if err := http.ListenAndServe(r.Config.Address(), mux); err != nil {
+	server := &http.Server{
+		Addr:        r.Config.Address(),
+		Handler:     mux,
+		ReadTimeout: 30 * time.Second,
+		ErrorLog:    r.logger,
+	}
+	if err := server.ListenAndServe(); err != nil {
 		r.logger.Fatal(err)
 	}
 	r.Stop()
