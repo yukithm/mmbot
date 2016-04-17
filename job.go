@@ -1,7 +1,7 @@
 package mmbot
 
 // JobFunc is job action function.
-type JobFunc func(*Robot) error
+type JobFunc func(*Robot)
 
 // Job is a scheduled task.
 type Job struct {

@@ -56,6 +56,7 @@ func (r *Robot) runLoop() {
 		go r.startServer()
 	}
 	go r.startClient()
+	r.startScheduler()
 
 	receiver := r.Client.Receiver()
 	for {
