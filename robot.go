@@ -84,11 +84,24 @@ func (r *Robot) handle(msg *message.InMessage) {
 	msg.Sender = r
 
 	for _, handler := range r.Handlers {
-		if handler.CanHandle(msg) {
-			err := handler.Handle(msg)
-			if err != nil {
-				r.logger.Print(err)
-			}
+		r.callHandler(handler, msg)
+	}
+}
+
+func (r *Robot) callHandler(handler Handler, msg *message.InMessage) {
+	defer func() {
+		if err := recover(); err != nil {
+			const size = 64 << 10
+			buf := make([]byte, size)
+			buf = buf[:runtime.Stack(buf, false)]
+			r.logger.Printf("mmbot: panic handler: %v\n%s", err, buf)
+		}
+	}()
+
+	if handler.CanHandle(msg) {
+		err := handler.Handle(msg)
+		if err != nil {
+			r.logger.Print(err)
 		}
 	}
 }
