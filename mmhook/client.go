@@ -135,18 +135,18 @@ func (c *Client) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	msg := InMessage{}
 	if err := decodeForm(&msg, r); err != nil {
 		c.logger.Printf("Invalid form data: %v", err)
-		http.NotFound(w, r)
+		http.Error(w, "400 Bad Request", http.StatusBadRequest)
 		return
 	}
 
 	if len(c.tokens) > 0 {
 		if msg.Token == "" {
 			c.logger.Printf("No token request from %q", r.RemoteAddr)
-			http.Error(w, "401 Unauthorized", http.StatusUnauthorized)
+			http.Error(w, "400 Bad Request", http.StatusBadRequest)
 			return
 		} else if !c.validToken(msg.Token) {
 			c.logger.Printf("Invalid token %q request from %q", msg.Token, r.RemoteAddr)
-			http.Error(w, "401 Unauthorized", http.StatusUnauthorized)
+			http.Error(w, "400 Bad Request", http.StatusBadRequest)
 			return
 		}
 	}
