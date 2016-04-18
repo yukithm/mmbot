@@ -5,7 +5,6 @@ import (
 	"log"
 	"mmbot/adapter"
 	"mmbot/message"
-	"mmbot/mmhook"
 	"net/http"
 	"runtime"
 	"time"
@@ -25,13 +24,13 @@ type Robot struct {
 	quit      chan bool
 }
 
-func NewRobot(config *Config) *Robot {
+func NewRobot(config *Config, client adapter.Adapter) *Robot {
 	if config.Logger == nil {
 		config.Logger = log.New(ioutil.Discard, "", 0)
 	}
 	bot := &Robot{
 		Config: config,
-		Client: mmhook.NewClient(config.AdapterConfig, config.Logger),
+		Client: client,
 		logger: config.Logger,
 		quit:   make(chan bool),
 	}
@@ -63,7 +62,10 @@ func (r *Robot) runLoop() {
 		select {
 		case <-r.quit:
 			return
-		case msg := <-receiver:
+		case msg, ok := <-receiver:
+			if !ok {
+				return
+			}
 			r.handle(&msg)
 		}
 	}

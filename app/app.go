@@ -34,6 +34,7 @@ func NewApp() *App {
 
 	app.App.Commands = []cli.Command{
 		app.newRunCommand(),
+		app.newShellCommand(),
 	}
 
 	app.App.Before = func(c *cli.Context) error {
