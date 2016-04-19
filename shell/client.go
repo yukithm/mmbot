@@ -45,9 +45,15 @@ func (c *Client) Start() (chan message.InMessage, chan error) {
 	c.quit = make(chan bool)
 	c.errCh = make(chan error)
 
-	go c.readline()
 	go func() {
-		c.quitting = <-c.quit
+		c.readline()
+		close(c.in)
+	}()
+
+	go func() {
+		<-c.quit
+		c.quitting = true
+		close(c.quit)
 	}()
 
 	return c.in, c.errCh
@@ -56,6 +62,7 @@ func (c *Client) Start() (chan message.InMessage, chan error) {
 // Stop terminates interactive shell.
 func (c *Client) Stop() {
 	c.quit <- true
+	<-c.quit
 }
 
 // Send displays a message.
@@ -87,7 +94,6 @@ func (c *Client) readline() {
 	rl, err := NewReadline("shell> ")
 	if err != nil {
 		c.errCh <- err
-		close(c.in)
 		return
 	}
 	defer rl.Close()
@@ -96,11 +102,9 @@ func (c *Client) readline() {
 		time.Sleep(200 * time.Millisecond)
 		line, err := rl.Readline()
 		if err == io.EOF || err == readline.ErrInterrupt || c.quitting {
-			close(c.in)
 			return
 		} else if err != nil {
 			c.errCh <- err
-			close(c.in)
 			return
 		}
 
@@ -125,7 +129,6 @@ func (c *Client) readline() {
 		buf, err := toJSON(msg)
 		if err != nil {
 			c.errCh <- err
-			close(c.in)
 			return
 		}
 		fmt.Printf("[Receive]\n%s\n----------------\n", buf)

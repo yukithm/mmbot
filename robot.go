@@ -21,7 +21,9 @@ type Robot struct {
 	Jobs      []Job
 	scheduler *cron.Cron
 	logger    *log.Logger
+	aborted   bool
 	quit      chan bool
+	errCh     chan error
 }
 
 func NewRobot(config *Config, client adapter.Adapter) *Robot {
@@ -32,22 +34,34 @@ func NewRobot(config *Config, client adapter.Adapter) *Robot {
 		Config: config,
 		Client: client,
 		logger: config.Logger,
-		quit:   make(chan bool),
 	}
 
 	return bot
 }
 
-func (r *Robot) Run() {
+func (r *Robot) Start() chan error {
+	r.errCh = make(chan error)
+	go r.run()
+	return r.errCh
+}
+
+func (r *Robot) run() {
+	r.aborted = false
+	r.quit = make(chan bool)
 	r.runLoop()
 
-	r.Client.Stop()
-	r.logger.Println("Stop adapter")
+	if !r.aborted {
+		r.Client.Stop()
+		r.logger.Println("Stop adapter")
+	}
 
 	if r.scheduler != nil {
 		r.scheduler.Stop()
 		r.logger.Println("Stop job scheduler")
 	}
+
+	close(r.quit)
+	close(r.errCh)
 }
 
 func (r *Robot) runLoop() {
@@ -65,11 +79,13 @@ func (r *Robot) runLoop() {
 			return
 		case e, ok := <-errCh:
 			if ok {
+				r.aborted = true
 				r.logger.Print(e)
 			}
 			return
 		case msg, ok := <-receiver:
 			if !ok {
+				r.aborted = true
 				return
 			}
 			r.handle(&msg)
@@ -78,7 +94,10 @@ func (r *Robot) runLoop() {
 }
 
 func (r *Robot) Stop() {
-	r.quit <- true
+	if !r.aborted {
+		r.quit <- true
+		<-r.quit
+	}
 }
 
 func (r *Robot) Send(msg *message.OutMessage) error {

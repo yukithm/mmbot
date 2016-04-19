@@ -63,12 +63,21 @@ func (app *App) shellCommand(c *cli.Context) {
 		syscall.SIGTERM,
 		syscall.SIGQUIT)
 
+	quit := make(chan bool)
+
 	go func() {
 		s := <-sigCh
 		app.Config.Logger.Printf("%q received", s)
-		robot.Stop()
+		close(quit)
 	}()
 
-	robot.Run()
-	app.Config.Logger.Println("Stop robot")
+	errCh := robot.Start()
+
+	select {
+	case <-quit:
+		app.Config.Logger.Println("Stop robot")
+		robot.Stop()
+	case <-errCh:
+		app.Config.Logger.Println("Stop robot")
+	}
 }
