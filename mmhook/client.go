@@ -25,7 +25,7 @@ type Client struct {
 	http   *http.Client
 	tokens map[string]int
 	in     chan message.InMessage
-	quit   chan bool
+	errCh  chan error
 }
 
 // NewClient returns new mattermost webhook client.
@@ -36,8 +36,6 @@ func NewClient(config *adapter.Config, logger *log.Logger) *Client {
 	c := &Client{
 		config: config,
 		logger: logger,
-		in:     make(chan message.InMessage),
-		quit:   make(chan bool),
 	}
 
 	tr := &http.Transport{
@@ -67,17 +65,17 @@ func NewClient(config *adapter.Config, logger *log.Logger) *Client {
 	return c
 }
 
-// Run starts the communication with Mattermost and blocks until stopped.
-func (c *Client) Run() error {
-	<-c.quit
-	close(c.quit)
-	return nil
+// Start starts the communication with Mattermost.
+func (c *Client) Start() (chan message.InMessage, chan error) {
+	c.in = make(chan message.InMessage)
+	c.errCh = make(chan error)
+	return c.in, c.errCh
 }
 
 // Stop terminates the communication.
-func (c *Client) Stop() error {
-	c.quit <- true
-	return nil
+func (c *Client) Stop() {
+	close(c.in)
+	close(c.errCh)
 }
 
 // Send sends a message to Mattermost.
@@ -108,11 +106,6 @@ func (c *Client) Send(msg *message.OutMessage) error {
 	}
 
 	return nil
-}
-
-// Receiver returns a channel that receives messages from chat service.
-func (c *Client) Receiver() chan message.InMessage {
-	return c.in
 }
 
 // IncomingWebHook returns webhook. It will be disabled if nil.

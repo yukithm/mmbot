@@ -16,17 +16,14 @@ type IncomingWebHook struct {
 
 // Adapter is a client to a particular chat service.
 type Adapter interface {
-	// Run starts the communication with the chat service and blocks until stopped.
-	Run() error
+	// Start starts the communication with the chat service.
+	Start() (chan message.InMessage, chan error)
 
 	// Stop terminates the communication.
-	Stop() error
+	Stop()
 
 	// Send sends a message to chat service.
 	Send(msg *message.OutMessage) error
-
-	// Receiver returns a channel that receives messages from chat service.
-	Receiver() chan message.InMessage
 
 	// IncomingWebHook returns webhook. It will be disabled if nil.
 	IncomingWebHook() *IncomingWebHook

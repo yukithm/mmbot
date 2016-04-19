@@ -54,13 +54,19 @@ func (r *Robot) runLoop() {
 	if !r.Config.DisableServer {
 		go r.startServer()
 	}
-	go r.startClient()
+
+	receiver, errCh := r.Client.Start()
+
 	r.startScheduler()
 
-	receiver := r.Client.Receiver()
 	for {
 		select {
 		case <-r.quit:
+			return
+		case e, ok := <-errCh:
+			if ok {
+				r.logger.Print(e)
+			}
 			return
 		case msg, ok := <-receiver:
 			if !ok {
@@ -107,14 +113,6 @@ func (r *Robot) callHandler(handler Handler, msg *message.InMessage) {
 			r.logger.Print(err)
 		}
 	}
-}
-
-func (r *Robot) startClient() {
-	err := r.Client.Run()
-	if err != nil {
-		r.logger.Print(err)
-	}
-	r.Stop()
 }
 
 func (r *Robot) startScheduler() {

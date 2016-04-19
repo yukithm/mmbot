@@ -18,10 +18,12 @@ import (
 
 // Client is a client for the shell.
 type Client struct {
-	config *adapter.Config
-	logger *log.Logger
-	in     chan message.InMessage
-	quit   chan bool
+	config   *adapter.Config
+	logger   *log.Logger
+	in       chan message.InMessage
+	quit     chan bool
+	quitting bool
+	errCh    chan error
 }
 
 // NewClient returns new shell client.
@@ -32,25 +34,28 @@ func NewClient(config *adapter.Config, logger *log.Logger) *Client {
 	c := &Client{
 		config: config,
 		logger: logger,
-		in:     make(chan message.InMessage),
-		quit:   make(chan bool),
 	}
 
 	return c
 }
 
-// Run starts the interactive shell and blocks until stopped.
-func (c *Client) Run() error {
+// Start starts the interactive shell.
+func (c *Client) Start() (chan message.InMessage, chan error) {
+	c.in = make(chan message.InMessage)
+	c.quit = make(chan bool)
+	c.errCh = make(chan error)
+
 	go c.readline()
-	<-c.quit
-	close(c.quit)
-	return nil
+	go func() {
+		c.quitting = <-c.quit
+	}()
+
+	return c.in, c.errCh
 }
 
 // Stop terminates interactive shell.
-func (c *Client) Stop() error {
+func (c *Client) Stop() {
 	c.quit <- true
-	return nil
 }
 
 // Send displays a message.
@@ -73,11 +78,6 @@ func (c *Client) Send(msg *message.OutMessage) error {
 	return nil
 }
 
-// Receiver returns a channel that receives messages from shell.
-func (c *Client) Receiver() chan message.InMessage {
-	return c.in
-}
-
 // IncomingWebHook returns webhook. It will be disabled if nil.
 func (c *Client) IncomingWebHook() *adapter.IncomingWebHook {
 	return nil
@@ -86,7 +86,7 @@ func (c *Client) IncomingWebHook() *adapter.IncomingWebHook {
 func (c *Client) readline() {
 	rl, err := NewReadline("shell> ")
 	if err != nil {
-		c.logger.Println(err)
+		c.errCh <- err
 		close(c.in)
 		return
 	}
@@ -95,11 +95,11 @@ func (c *Client) readline() {
 	for {
 		time.Sleep(200 * time.Millisecond)
 		line, err := rl.Readline()
-		if err == io.EOF || err == readline.ErrInterrupt {
+		if err == io.EOF || err == readline.ErrInterrupt || c.quitting {
 			close(c.in)
 			return
 		} else if err != nil {
-			c.logger.Println(err)
+			c.errCh <- err
 			close(c.in)
 			return
 		}
@@ -124,7 +124,7 @@ func (c *Client) readline() {
 
 		buf, err := toJSON(msg)
 		if err != nil {
-			c.logger.Println(err)
+			c.errCh <- err
 			close(c.in)
 			return
 		}
