@@ -26,14 +26,14 @@ type Robot struct {
 	errCh     chan error
 }
 
-func NewRobot(config *Config, client adapter.Adapter) *Robot {
-	if config.Logger == nil {
-		config.Logger = log.New(ioutil.Discard, "", 0)
+func NewRobot(config *Config, client adapter.Adapter, logger *log.Logger) *Robot {
+	if logger == nil {
+		logger = log.New(ioutil.Discard, "", 0)
 	}
 	bot := &Robot{
 		Config: config,
 		Client: client,
-		logger: config.Logger,
+		logger: logger,
 	}
 
 	return bot

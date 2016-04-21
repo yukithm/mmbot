@@ -9,6 +9,9 @@ import (
 )
 
 func (app *App) updateConfigByFlags(c *cli.Context) {
+	if c.IsSet("log") {
+		app.Config.Common.Log = c.String("log")
+	}
 	if c.IsSet("outgoing-url") {
 		app.Config.Mattermost.OutgoingURL = c.String("outgoing-url")
 	}
@@ -41,31 +44,41 @@ func (app *App) updateConfigByFlags(c *cli.Context) {
 	}
 }
 
-func (app *App) initLogger(logfile string) error {
-	var w io.Writer
-	if logfile == "" {
-		w = os.Stderr
-	} else if logfile == "-" {
-		w = os.Stdout
-	} else {
-		f, err := os.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+type Logger struct {
+	*log.Logger
+	file *os.File
+}
+
+func (l *Logger) Close() error {
+	if l.file != nil {
+		err := l.file.Close()
 		if err != nil {
 			return err
 		}
-		app.Config.logfile = f
-		w = f
+		l.file = nil
 	}
-	app.Config.Logger = log.New(w, "", log.LstdFlags)
 	return nil
 }
 
-func (app *App) closeLogger() error {
-	if app.Config.logfile != nil {
-		err := app.Config.logfile.Close()
+func (app *App) newLogger() (*Logger, error) {
+	var file *os.File
+	var w io.Writer
+
+	if app.Config.Common.Log == "" {
+		w = os.Stderr
+	} else if app.Config.Common.Log == "-" {
+		w = os.Stdout
+	} else {
+		file, err := os.OpenFile(app.Config.Common.Log, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		app.Config.logfile = nil
+		w = file
 	}
-	return nil
+
+	logger := &Logger{
+		Logger: log.New(w, "", log.LstdFlags),
+		file:   file,
+	}
+	return logger, nil
 }

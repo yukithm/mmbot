@@ -1,6 +1,7 @@
 package app
 
 import (
+	"log"
 	"mmbot"
 	"mmbot/mmhook"
 	"os"
@@ -64,12 +65,6 @@ func (app *App) newRunCommand() cli.Command {
 			},
 		},
 		Action: app.runCommand,
-		Before: func(c *cli.Context) error {
-			return app.initLogger(c.String("log"))
-		},
-		After: func(c *cli.Context) error {
-			return app.closeLogger()
-		},
 	}
 }
 
@@ -77,8 +72,14 @@ func (app *App) runCommand(c *cli.Context) {
 	app.updateConfigByFlags(c)
 	app.Config.ValidateAndExitOnError()
 
-	client := mmhook.NewClient(app.Config.AdapterConfig(), app.Config.Logger)
-	robot := mmbot.NewRobot(app.Config.RobotConfig(), client)
+	logger, err := app.newLogger()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer logger.Close()
+
+	client := mmhook.NewClient(app.Config.AdapterConfig(), logger.Logger)
+	robot := mmbot.NewRobot(app.Config.RobotConfig(), client, logger.Logger)
 	robot.Handlers = app.Handlers
 	robot.Routes = app.Routes
 	robot.Jobs = app.Jobs
@@ -94,7 +95,7 @@ func (app *App) runCommand(c *cli.Context) {
 
 	go func() {
 		s := <-sigCh
-		app.Config.Logger.Printf("%q received", s)
+		logger.Printf("%q received", s)
 		close(quit)
 	}()
 
@@ -103,8 +104,8 @@ func (app *App) runCommand(c *cli.Context) {
 	select {
 	case <-quit:
 		robot.Stop()
-		app.Config.Logger.Println("Stop robot")
+		logger.Println("Stop robot")
 	case <-errCh:
-		app.Config.Logger.Println("Abort robot")
+		logger.Println("Abort robot")
 	}
 }

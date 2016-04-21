@@ -29,12 +29,16 @@ type ServerConfig struct {
 	Port        int    `toml:"port"`
 }
 
+// CommonConfig is the configration of common category.
+type CommonConfig struct {
+	Log string `toml:"log"`
+}
+
 // Config is the configuration of the application.
 type Config struct {
+	Common     CommonConfig     `toml:"common"`
 	Mattermost MattermostConfig `toml:"mattermost"`
 	Server     ServerConfig     `toml:"server"`
-	Logger     *log.Logger      `toml:"-"`
-	logfile    *os.File         `toml:"-"`
 }
 
 // LoadConfigFile loads configuration file and returns Config.
@@ -97,7 +101,6 @@ func (c *Config) RobotConfig() *mmbot.Config {
 		BindAddress:   c.Server.BindAddress,
 		Port:          c.Server.Port,
 		DisableServer: !c.Server.Enable,
-		Logger:        c.Logger,
 		AdapterConfig: c.AdapterConfig(),
 	}
 }
