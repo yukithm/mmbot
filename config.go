@@ -1,9 +1,6 @@
 package mmbot
 
-import (
-	"fmt"
-	"mmbot/adapter"
-)
+import "fmt"
 
 // Config for the robot.
 type Config struct {
@@ -11,7 +8,6 @@ type Config struct {
 	BindAddress   string // Bind address to listen on
 	Port          int    // Port to listen on
 	DisableServer bool   // Disable HTTP server
-	AdapterConfig *adapter.Config
 }
 
 // Address returns bind address and port string.

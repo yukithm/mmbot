@@ -101,6 +101,5 @@ func (c *Config) RobotConfig() *mmbot.Config {
 		BindAddress:   c.Server.BindAddress,
 		Port:          c.Server.Port,
 		DisableServer: !c.Server.Enable,
-		AdapterConfig: c.AdapterConfig(),
 	}
 }
