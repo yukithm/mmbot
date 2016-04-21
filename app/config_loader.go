@@ -25,9 +25,6 @@ func loadConfig(c *cli.Context) (*Config, error) {
 		log.Fatal(err)
 	}
 
-	// TODO: make logger configurable
-	config.Logger = log.New(os.Stderr, "", log.LstdFlags)
-
 	return config, nil
 }
 

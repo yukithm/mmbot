@@ -58,8 +58,18 @@ func (app *App) newRunCommand() cli.Command {
 				Value: 8080,
 				Usage: "bind port for the bot HTTP server",
 			},
+			cli.StringFlag{
+				Name:  "log",
+				Usage: "log file",
+			},
 		},
 		Action: app.runCommand,
+		Before: func(c *cli.Context) error {
+			return app.initLogger(c.String("log"))
+		},
+		After: func(c *cli.Context) error {
+			return app.closeLogger()
+		},
 	}
 }
 
@@ -92,8 +102,8 @@ func (app *App) runCommand(c *cli.Context) {
 
 	select {
 	case <-quit:
-		app.Config.Logger.Println("Stop robot")
 		robot.Stop()
+		app.Config.Logger.Println("Stop robot")
 	case <-errCh:
 		app.Config.Logger.Println("Abort robot")
 	}

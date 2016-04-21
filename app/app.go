@@ -3,6 +3,7 @@ package app
 import (
 	"log"
 	"mmbot"
+	"os"
 
 	"github.com/codegangsta/cli"
 )
@@ -42,6 +43,8 @@ func NewApp() *App {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		config.Logger = log.New(os.Stderr, "", log.LstdFlags)
 		app.Config = config
 		return nil
 	}

@@ -34,6 +34,7 @@ type Config struct {
 	Mattermost MattermostConfig `toml:"mattermost"`
 	Server     ServerConfig     `toml:"server"`
 	Logger     *log.Logger      `toml:"-"`
+	logfile    *os.File         `toml:"-"`
 }
 
 // LoadConfigFile loads configuration file and returns Config.

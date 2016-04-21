@@ -1,6 +1,12 @@
 package app
 
-import "github.com/codegangsta/cli"
+import (
+	"io"
+	"log"
+	"os"
+
+	"github.com/codegangsta/cli"
+)
 
 func (app *App) updateConfigByFlags(c *cli.Context) {
 	if c.IsSet("outgoing-url") {
@@ -33,4 +39,33 @@ func (app *App) updateConfigByFlags(c *cli.Context) {
 	if c.IsSet("port") {
 		app.Config.Server.Port = c.Int("port")
 	}
+}
+
+func (app *App) initLogger(logfile string) error {
+	var w io.Writer
+	if logfile == "" {
+		w = os.Stderr
+	} else if logfile == "-" {
+		w = os.Stdout
+	} else {
+		f, err := os.OpenFile(logfile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+		if err != nil {
+			return err
+		}
+		app.Config.logfile = f
+		w = f
+	}
+	app.Config.Logger = log.New(w, "", log.LstdFlags)
+	return nil
+}
+
+func (app *App) closeLogger() error {
+	if app.Config.logfile != nil {
+		err := app.Config.logfile.Close()
+		if err != nil {
+			return err
+		}
+		app.Config.logfile = nil
+	}
+	return nil
 }
