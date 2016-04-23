@@ -21,7 +21,7 @@ type Client struct {
 	config   *adapter.Config
 	logger   *log.Logger
 	in       chan message.InMessage
-	quit     chan bool
+	quit     chan struct{}
 	quitting bool
 	errCh    chan error
 }
@@ -41,9 +41,9 @@ func NewClient(config *adapter.Config, logger *log.Logger) *Client {
 
 // Start starts the interactive shell.
 func (c *Client) Start() (chan message.InMessage, chan error) {
-	c.in = make(chan message.InMessage)
-	c.quit = make(chan bool)
-	c.errCh = make(chan error)
+	c.in = make(chan message.InMessage, 1)
+	c.quit = make(chan struct{}, 1)
+	c.errCh = make(chan error, 1)
 
 	go func() {
 		c.readline()
@@ -61,8 +61,7 @@ func (c *Client) Start() (chan message.InMessage, chan error) {
 
 // Stop terminates interactive shell.
 func (c *Client) Stop() {
-	c.quit <- true
-	<-c.quit
+	c.quit <- struct{}{}
 }
 
 // Send displays a message.

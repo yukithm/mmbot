@@ -67,8 +67,8 @@ func NewClient(config *adapter.Config, logger *log.Logger) *Client {
 
 // Start starts the communication with Mattermost.
 func (c *Client) Start() (chan message.InMessage, chan error) {
-	c.in = make(chan message.InMessage)
-	c.errCh = make(chan error)
+	c.in = make(chan message.InMessage, 1)
+	c.errCh = make(chan error, 1)
 	return c.in, c.errCh
 }
 

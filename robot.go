@@ -22,7 +22,7 @@ type Robot struct {
 	scheduler *cron.Cron
 	logger    *log.Logger
 	aborted   bool
-	quit      chan bool
+	quit      chan struct{}
 	errCh     chan error
 }
 
@@ -40,14 +40,14 @@ func NewRobot(config *Config, client adapter.Adapter, logger *log.Logger) *Robot
 }
 
 func (r *Robot) Start() chan error {
-	r.errCh = make(chan error)
+	r.errCh = make(chan error, 1)
 	go r.run()
 	return r.errCh
 }
 
 func (r *Robot) run() {
 	r.aborted = false
-	r.quit = make(chan bool)
+	r.quit = make(chan struct{}, 1)
 	r.runLoop()
 
 	if !r.aborted {
@@ -95,7 +95,7 @@ func (r *Robot) runLoop() {
 
 func (r *Robot) Stop() {
 	if !r.aborted {
-		r.quit <- true
+		r.quit <- struct{}{}
 		<-r.quit
 	}
 }

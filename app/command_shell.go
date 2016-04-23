@@ -74,7 +74,7 @@ func (app *App) shellCommand(c *cli.Context) {
 		syscall.SIGTERM,
 		syscall.SIGQUIT)
 
-	quit := make(chan bool)
+	quit := make(chan struct{})
 
 	go func() {
 		s := <-sigCh
