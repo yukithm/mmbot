@@ -105,7 +105,12 @@ func (app *App) runCommand(c *cli.Context) {
 	case <-quit:
 		robot.Stop()
 		logger.Println("Stop robot")
-	case <-errCh:
-		logger.Println("Abort robot")
+	case err, ok := <-errCh:
+		if ok && err != nil {
+			logger.Print(err)
+			logger.Println("Abort robot")
+		} else {
+			logger.Println("Stop robot")
+		}
 	}
 }

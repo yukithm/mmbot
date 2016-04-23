@@ -1,6 +1,7 @@
 package mmbot
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"mmbot/adapter"
@@ -162,7 +163,7 @@ func (r *Robot) startServer() {
 		ErrorLog:    r.logger,
 	}
 	if err := server.ListenAndServe(); err != nil {
-		r.logger.Fatal(err)
+		r.errCh <- err
 	}
 	r.Stop()
 }
@@ -183,7 +184,7 @@ func (r *Robot) mountClient(mux *mux.Router) {
 func (r *Robot) mountRoutes(mux *mux.Router) {
 	for _, route := range r.Routes {
 		if route.Pattern == "" || route.Action == nil {
-			log.Fatalf("Invalid route: %v", route)
+			r.errCh <- fmt.Errorf("Invalid route: %v", route)
 		}
 
 		wrapped := r.wrapRouteAction(route)
