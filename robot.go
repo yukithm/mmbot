@@ -15,17 +15,28 @@ import (
 )
 
 type Robot struct {
-	Config    *Config
-	Client    adapter.Adapter
-	Handlers  []Handler
-	Routes    []Route
-	Jobs      []Job
-	scheduler *cron.Cron
-	logger    *log.Logger
-	aborted   bool
-	quit      chan struct{}
-	errCh     chan error
+	Config     *Config
+	Client     adapter.Adapter
+	Handlers   []Handler
+	Routes     []Route
+	Jobs       []Job
+	scheduler  *cron.Cron
+	logger     *log.Logger
+	workerJobs chan workerJob
+	aborted    bool
+	quit       chan struct{}
+	errCh      chan error
 }
+
+type workerJob struct {
+	handler Handler
+	message *message.InMessage
+}
+
+const (
+	numJobWorkers = 4
+	numJobBuffers = 20
+)
 
 func NewRobot(config *Config, client adapter.Adapter, logger *log.Logger) *Robot {
 	if logger == nil {
@@ -49,6 +60,12 @@ func (r *Robot) Start() chan error {
 func (r *Robot) run() {
 	r.aborted = false
 	r.quit = make(chan struct{}, 1)
+
+	r.workerJobs = make(chan workerJob, numJobBuffers)
+	for i := 1; i <= numJobWorkers; i++ {
+		go r.worker(i, r.workerJobs)
+	}
+
 	r.runLoop()
 
 	if !r.aborted {
@@ -61,6 +78,7 @@ func (r *Robot) run() {
 		r.logger.Println("Stop job scheduler")
 	}
 
+	close(r.workerJobs)
 	close(r.quit)
 	close(r.errCh)
 }
@@ -113,7 +131,16 @@ func (r *Robot) handle(msg *message.InMessage) {
 	msg.Sender = r
 
 	for _, handler := range r.Handlers {
-		r.callHandler(handler, msg)
+		r.workerJobs <- workerJob{
+			handler: handler,
+			message: msg,
+		}
+	}
+}
+
+func (r *Robot) worker(id int, jobs <-chan workerJob) {
+	for job := range jobs {
+		r.callHandler(job.handler, job.message)
 	}
 }
 
