@@ -1,3 +1,5 @@
+// Package app provides a base of the bot application.
+// App handles command line arguments and manages mmbot.Robot.
 package app
 
 import (

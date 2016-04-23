@@ -6,24 +6,29 @@ import (
 	"regexp"
 )
 
+// Handler is a message handler.
 type Handler interface {
 	CanHandle(*message.InMessage) bool
 	Handle(*message.InMessage) error
 }
 
+// HandlerAction is a function that process a message.
 type HandlerAction func(*message.InMessage) error
 
+// PatternHandler is a pattern matching handler.
 type PatternHandler struct {
 	MessageType message.Type
 	Pattern     *regexp.Regexp
 	Action      HandlerAction
 }
 
+// CanHandle returns true if the handler can process the message.
 func (h PatternHandler) CanHandle(msg *message.InMessage) bool {
 	_, ok := h.matchPattern(msg)
 	return ok
 }
 
+// Handle processes a message.
 func (h PatternHandler) Handle(msg *message.InMessage) error {
 	matches, ok := h.matchPattern(msg)
 	if !ok {

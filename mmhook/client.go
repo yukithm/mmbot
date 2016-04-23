@@ -1,3 +1,4 @@
+// Package mmhook implements an adapter that uses Mattermost Webhooks.
 package mmhook
 
 import (

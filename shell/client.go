@@ -1,3 +1,4 @@
+// Package shell implements an adapter that uses readline interactive shell for development.
 package shell
 
 import (

@@ -44,11 +44,13 @@ func (app *App) updateConfigByFlags(c *cli.Context) {
 	}
 }
 
+// Logger is a logger that has *os.File.
 type Logger struct {
 	*log.Logger
 	file *os.File
 }
 
+// Close close the log file when it is not nil.
 func (l *Logger) Close() error {
 	if l.file != nil {
 		err := l.file.Close()

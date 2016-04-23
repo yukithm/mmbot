@@ -1,3 +1,4 @@
+// Package adapter defines Adapter interface for mmbot.
 package adapter
 
 import (

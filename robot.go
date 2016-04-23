@@ -14,6 +14,7 @@ import (
 	"github.com/robfig/cron"
 )
 
+// Robot is a main controller of the bot.
 type Robot struct {
 	Config     *Config
 	Client     adapter.Adapter
@@ -38,6 +39,7 @@ const (
 	numJobBuffers = 20
 )
 
+// NewRobot creates new bot with specified adapter.
 func NewRobot(config *Config, client adapter.Adapter, logger *log.Logger) *Robot {
 	if logger == nil {
 		logger = log.New(ioutil.Discard, "", 0)
@@ -51,6 +53,7 @@ func NewRobot(config *Config, client adapter.Adapter, logger *log.Logger) *Robot
 	return bot
 }
 
+// Start starts the bot process.
 func (r *Robot) Start() chan error {
 	r.errCh = make(chan error, 1)
 	go r.run()
@@ -112,6 +115,7 @@ func (r *Robot) runLoop() {
 	}
 }
 
+// Stop stops the bot.
 func (r *Robot) Stop() {
 	if !r.aborted {
 		r.quit <- struct{}{}
@@ -119,10 +123,12 @@ func (r *Robot) Stop() {
 	}
 }
 
+// Send sends a message to the chat service.
 func (r *Robot) Send(msg *message.OutMessage) error {
 	return r.Client.Send(msg)
 }
 
+// SenderName returns the bot name.
 func (r *Robot) SenderName() string {
 	return r.Config.UserName
 }
@@ -228,6 +234,7 @@ func (r *Robot) wrapRouteAction(route Route) func(http.ResponseWriter, *http.Req
 	}
 }
 
+// RouteVars returns routing parameter values for the request.
 func (r *Robot) RouteVars(req *http.Request) map[string]string {
 	return mux.Vars(req)
 }

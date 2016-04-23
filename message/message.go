@@ -1,3 +1,4 @@
+// Package message defines in/out message types.
 package message
 
 import (
@@ -5,18 +6,29 @@ import (
 	"strings"
 )
 
+// Sender is a message sender.
 type Sender interface {
 	Send(*OutMessage) error
 	SenderName() string
 }
 
+// Type is a message type.
 type Type uint
 
 const (
+	// UnknownMessage means the message is unknown type.
 	UnknownMessage Type = 0
-	PublicMessage  Type = 1 << iota
+
+	// PublicMessage means the message is a public message.
+	PublicMessage Type = 1 << iota
+
+	// MentionMessage means the message is a mention and reply message.
 	MentionMessage
+
+	// DirectMessage means the message is a direct(private) message.
 	DirectMessage
+
+	// CommandMessage means the message is command like message such as starting with "/".
 	// CommandMessage
 )
 
@@ -47,6 +59,7 @@ type OutMessage struct {
 var mentionNameRegexp = regexp.MustCompile(`\A@([0-9a-zA-Z_]+)`)
 var mentionPrefixRegexp = regexp.MustCompile(`\A@(?:[0-9a-zA-Z_]+)\s*`)
 
+// MentionName returns the name of mentioned user.
 func (in *InMessage) MentionName() string {
 	if matches := mentionNameRegexp.FindStringSubmatch(in.Text); matches != nil {
 		return matches[1]
@@ -55,6 +68,7 @@ func (in *InMessage) MentionName() string {
 	return ""
 }
 
+// MentionlessText returns the text which is trimmed the mention part.
 func (in *InMessage) MentionlessText() string {
 	if loc := mentionPrefixRegexp.FindStringIndex(in.Text); loc != nil {
 		return in.Text[loc[1]:]
