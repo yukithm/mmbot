@@ -4,11 +4,11 @@ import (
 	"errors"
 	"io/ioutil"
 	"log"
-	"mmbot"
-	"mmbot/adapter"
 	"os"
 
 	"github.com/naoina/toml"
+	"github.com/yukithm/mmbot"
+	"github.com/yukithm/mmbot/adapter"
 )
 
 // MattermostConfig is the configuration for mattermost.

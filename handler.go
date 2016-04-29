@@ -2,8 +2,9 @@ package mmbot
 
 import (
 	"fmt"
-	"mmbot/message"
 	"regexp"
+
+	"github.com/yukithm/mmbot/message"
 )
 
 // Handler is a message handler.

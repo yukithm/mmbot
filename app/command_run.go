@@ -2,13 +2,13 @@ package app
 
 import (
 	"log"
-	"mmbot"
-	"mmbot/mmhook"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/codegangsta/cli"
+	"github.com/yukithm/mmbot"
+	"github.com/yukithm/mmbot/mmhook"
 )
 
 func (app *App) newRunCommand() cli.Command {

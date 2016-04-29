@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"mmbot/adapter"
-	"mmbot/message"
 	"net/http"
 	"runtime"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/robfig/cron"
+	"github.com/yukithm/mmbot/adapter"
+	"github.com/yukithm/mmbot/message"
 )
 
 // Robot is a main controller of the bot.

@@ -4,9 +4,9 @@ package app
 
 import (
 	"log"
-	"mmbot"
 
 	"github.com/codegangsta/cli"
+	"github.com/yukithm/mmbot"
 )
 
 // App is a bot application.

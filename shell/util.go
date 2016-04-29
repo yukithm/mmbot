@@ -1,9 +1,10 @@
 package shell
 
 import (
-	"mmbot/message"
-	"mmbot/mmhook"
 	"strings"
+
+	"github.com/yukithm/mmbot/message"
+	"github.com/yukithm/mmbot/mmhook"
 )
 
 func translateInMessage(msg *mmhook.InMessage) *message.InMessage {

@@ -7,14 +7,15 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"mmbot/adapter"
-	"mmbot/message"
-	"mmbot/mmhook"
 	"strconv"
 	"strings"
 	"time"
 
 	"gopkg.in/readline.v1"
+
+	"github.com/yukithm/mmbot/adapter"
+	"github.com/yukithm/mmbot/message"
+	"github.com/yukithm/mmbot/mmhook"
 )
 
 // Client is a client for the shell.

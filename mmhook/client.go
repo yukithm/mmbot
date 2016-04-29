@@ -9,14 +9,14 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"mmbot/adapter"
-	"mmbot/message"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gorilla/schema"
+	"github.com/yukithm/mmbot/adapter"
+	"github.com/yukithm/mmbot/message"
 )
 
 // Client is a client for Mattermost.

@@ -2,8 +2,9 @@
 package adapter
 
 import (
-	"mmbot/message"
 	"net/http"
+
+	"github.com/yukithm/mmbot/message"
 )
 
 // IncomingWebHook represents incoming webhook that receive messages.
