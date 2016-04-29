@@ -1,0 +1,46 @@
+# mmbot configuration file
+#
+# TOML format
+# See: https://github.com/toml-lang/toml
+
+[common]
+# Log file path (empty: STDERR, "-": STDOUT)
+# log = "./mmbot.log"
+
+[mattermost]
+# Webhook URL for posting messages (REQUIRED)
+# (send to Mattermost; Incoming Webhooks on Mattermost side)
+outgoing_url = "http://localhost/incoming_webhook_url"
+
+# Webhook path on the bot for receiving messages (default: "/")
+# (receive from Mattermost; Outgoing Webhooks on Mattermost side)
+# NOTE: You need to enable HTTP server (server.enable = true)
+incoming_path = "/mmbot_incoming"
+
+# Tokens from Mattermost outgoing webhooks (default: [])
+# If omitted, all requests are accepted
+tokens = [
+    "incomign_webhook_token"
+]
+
+# Username of the bot account (preceded by '@') (REQUIRED)
+username = "mmbot"
+
+# Overridding of username for Mattermost webhook (default: "")
+# override_username = "mmbot"
+
+# Overridding of icon URL for Mattermost webhook (default: "")
+# icon_url = "http://localhost/mmbot.png"
+
+# Disable certificate checking (default: false)
+# insecure_skip_verify = true
+
+[server]
+# Enable HTTP server for webhook and handlers (default: false)
+enable = true
+
+# Bind address for the bot HTTP server (default: ""; all interfaces)
+bind_address = ""
+
+# Bind port for the bot HTTP server (default: 8080)
+port = 8080
