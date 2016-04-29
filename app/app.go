@@ -35,6 +35,7 @@ func NewApp() *App {
 	}
 
 	app.App.Commands = []cli.Command{
+		app.newNewConfigCommand(),
 		app.newRunCommand(),
 		app.newShellCommand(),
 	}
