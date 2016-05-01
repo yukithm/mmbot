@@ -3,6 +3,7 @@ mmbot
 
 A chatbot framework specialized in Mattermost. mmbot uses Mattermost's webhooks (Incoming/Outgoing).
 
+**Note: mmbot is currently under heavy development and the API may change at any time.**
 
 Features
 --------
