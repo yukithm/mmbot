@@ -3,8 +3,6 @@
 package app
 
 import (
-	"log"
-
 	"github.com/codegangsta/cli"
 	"github.com/yukithm/mmbot"
 )
@@ -38,14 +36,15 @@ func NewApp() *App {
 		app.newShellCommand(),
 	}
 
-	app.App.Before = func(c *cli.Context) error {
-		config, err := loadConfig(c)
-		if err != nil {
-			log.Fatal(err)
-		}
-		app.Config = config
-		return nil
-	}
-
 	return app
+}
+
+// LoadConfig loads configuration file and store it into app.Config.
+func (app *App) LoadConfig(c *cli.Context) error {
+	config, err := loadConfig(c)
+	if err != nil {
+		return err
+	}
+	app.Config = config
+	return nil
 }

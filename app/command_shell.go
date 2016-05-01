@@ -48,6 +48,12 @@ func (app *App) newShellCommand() cli.Command {
 			},
 		},
 		Action: app.shellCommand,
+		Before: func(c *cli.Context) error {
+			if err := app.LoadConfig(c); err != nil {
+				log.Fatal(err)
+			}
+			return nil
+		},
 	}
 }
 

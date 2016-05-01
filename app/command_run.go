@@ -65,6 +65,12 @@ func (app *App) newRunCommand() cli.Command {
 			},
 		},
 		Action: app.runCommand,
+		Before: func(c *cli.Context) error {
+			if err := app.LoadConfig(c); err != nil {
+				log.Fatal(err)
+			}
+			return nil
+		},
 	}
 }
 
