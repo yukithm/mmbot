@@ -12,10 +12,8 @@ import (
 // App is a bot application.
 type App struct {
 	*cli.App
-	Config   *Config
-	Handlers []mmbot.Handler
-	Routes   []mmbot.Route
-	Jobs     []mmbot.Job
+	Config    *Config
+	InitRobot func(*mmbot.Robot)
 }
 
 // NewApp creates new App.

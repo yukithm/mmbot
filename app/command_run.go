@@ -80,9 +80,10 @@ func (app *App) runCommand(c *cli.Context) {
 
 	client := mmhook.NewClient(app.Config.AdapterConfig(), logger.Logger)
 	robot := mmbot.NewRobot(app.Config.RobotConfig(), client, logger.Logger)
-	robot.Handlers = app.Handlers
-	robot.Routes = app.Routes
-	robot.Jobs = app.Jobs
+
+	if app.InitRobot != nil {
+		app.InitRobot(robot)
+	}
 
 	sigCh := make(chan os.Signal)
 	signal.Notify(sigCh,

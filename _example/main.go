@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/yukithm/mmbot"
-	"github.com/yukithm/mmbot/app"
-	"github.com/yukithm/mmbot/message"
 	"net/http"
 	"regexp"
 	"time"
+
+	"github.com/yukithm/mmbot"
+	"github.com/yukithm/mmbot/app"
+	"github.com/yukithm/mmbot/message"
 )
 
 const (
@@ -24,7 +25,17 @@ func main() {
 	app.Version = Version
 	app.Usage = "a bot for Mattermost"
 
-	app.Handlers = []mmbot.Handler{
+	app.InitRobot = func(robot *mmbot.Robot) {
+		initHandlers(robot)
+		initRoutes(robot)
+		initJobs(robot)
+	}
+
+	app.RunAndExitOnError()
+}
+
+func initHandlers(robot *mmbot.Robot) {
+	robot.Handlers = []mmbot.Handler{
 		mmbot.PatternHandler{
 			Pattern: regexp.MustCompile(`\Ahello`),
 			Action: func(msg *message.InMessage) error {
@@ -49,8 +60,10 @@ func main() {
 			},
 		},
 	}
+}
 
-	app.Routes = []mmbot.Route{
+func initRoutes(robot *mmbot.Robot) {
+	robot.Routes = []mmbot.Route{
 		mmbot.NewPingRoute("/ping"),
 		mmbot.NewStatsRoute("/stats"),
 		mmbot.Route{
@@ -61,8 +74,10 @@ func main() {
 			},
 		},
 	}
+}
 
-	app.Jobs = []mmbot.Job{
+func initJobs(robot *mmbot.Robot) {
+	robot.Jobs = []mmbot.Job{
 		mmbot.Job{
 			Schedule: "0 * * * * *",
 			Action: func(bot *mmbot.Robot) {
@@ -73,6 +88,4 @@ func main() {
 			},
 		},
 	}
-
-	app.RunAndExitOnError()
 }
