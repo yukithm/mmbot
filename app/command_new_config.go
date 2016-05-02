@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -19,21 +18,19 @@ func (app *App) newNewConfigCommand() cli.Command {
 	}
 }
 
-func (app *App) newConfigCommand(c *cli.Context) {
-	logger := log.New(os.Stderr, "", 0)
+func (app *App) newConfigCommand(c *cli.Context) error {
 	cwd, err := os.Getwd()
 	if err != nil {
-		logger.Fatal(err)
+		return cli.NewExitError(err.Error(), 1)
 	}
 	filename := filepath.Join(cwd, c.App.Name+".toml")
 
 	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
 	if err != nil {
 		if os.IsExist(err) {
-			logger.Fatalf("%s already exists.", filename)
-		} else {
-			logger.Fatal(err)
+			return cli.NewExitError(fmt.Sprintf("%s already exists.", filename), 1)
 		}
+		return cli.NewExitError(err.Error(), 1)
 	}
 	defer file.Close()
 
@@ -44,9 +41,11 @@ func (app *App) newConfigCommand(c *cli.Context) {
 	}
 	tmpl := template.Must(template.New("config").Parse(configTemplate))
 	if err := tmpl.Execute(file, vars); err != nil {
-		logger.Fatal(err)
+		return cli.NewExitError(err.Error(), 1)
 	}
 	fmt.Printf("Written new config file to %s\n", filename)
+
+	return nil
 }
 
 const configTemplate = `# {{.Name}} configuration file

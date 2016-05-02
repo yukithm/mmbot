@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"regexp"
 	"time"
 
@@ -31,7 +32,10 @@ func main() {
 		initJobs(robot)
 	}
 
-	app.RunAndExitOnError()
+	if err := app.Run(os.Args); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }
 
 func initHandlers(robot *mmbot.Robot) {

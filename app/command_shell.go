@@ -1,7 +1,6 @@
 package app
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -50,20 +49,20 @@ func (app *App) newShellCommand() cli.Command {
 		Action: app.shellCommand,
 		Before: func(c *cli.Context) error {
 			if err := app.LoadConfig(c); err != nil {
-				log.Fatal(err)
+				return cli.NewExitError(err.Error(), 1)
 			}
 			return nil
 		},
 	}
 }
 
-func (app *App) shellCommand(c *cli.Context) {
+func (app *App) shellCommand(c *cli.Context) error {
 	app.updateConfigByFlags(c)
 	app.Config.ValidateAndExitOnError()
 
 	logger, err := app.newLogger()
 	if err != nil {
-		log.Fatal(err)
+		return cli.NewExitError(err.Error(), 1)
 	}
 	defer logger.Close()
 
@@ -103,4 +102,6 @@ func (app *App) shellCommand(c *cli.Context) {
 			logger.Println("Stop robot")
 		}
 	}
+
+	return nil
 }
