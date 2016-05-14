@@ -84,3 +84,10 @@ func (app *App) newLogger() (*Logger, error) {
 	}
 	return logger, nil
 }
+
+func fileExists(file string) bool {
+	if _, err := os.Stat(file); err != nil {
+		return false
+	}
+	return true
+}

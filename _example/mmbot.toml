@@ -44,3 +44,8 @@ bind_address = ""
 
 # Bind port for the bot HTTP server (default: 8080)
 port = 8080
+
+# Custom configuration example
+[example]
+foo = 123
+bar = "example"

@@ -21,18 +21,29 @@ const (
 )
 
 func main() {
-	app := app.NewApp()
-	app.Name = ApplicationName
-	app.Version = Version
-	app.Usage = "a bot for Mattermost"
+	myapp := app.NewApp()
+	myapp.Name = ApplicationName
+	myapp.Version = Version
+	myapp.Usage = "a bot for Mattermost"
 
-	app.InitRobot = func(robot *mmbot.Robot) {
+	var config *appConfig
+	myapp.ConfigLoader = func(file string) (*app.Config, error) {
+		c, err := loadConfig(file)
+		if err != nil {
+			return nil, err
+		}
+		config = c
+		return &c.Config, nil
+	}
+
+	myapp.InitRobot = func(robot *mmbot.Robot) {
+		// fmt.Printf("%#v\n", config.Example)
 		initHandlers(robot)
 		initRoutes(robot)
 		initJobs(robot)
 	}
 
-	if err := app.Run(os.Args); err != nil {
+	if err := myapp.Run(os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
