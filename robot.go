@@ -22,7 +22,7 @@ type Robot struct {
 	Routes     []Route
 	Jobs       []Job
 	scheduler  *cron.Cron
-	logger     *log.Logger
+	Logger     *log.Logger
 	workerJobs chan workerJob
 	aborted    bool
 	quit       chan struct{}
@@ -47,7 +47,7 @@ func NewRobot(config *Config, client adapter.Adapter, logger *log.Logger) *Robot
 	bot := &Robot{
 		Config: config,
 		Client: client,
-		logger: logger,
+		Logger: logger,
 	}
 
 	return bot
@@ -73,12 +73,12 @@ func (r *Robot) run() {
 
 	if !r.aborted {
 		r.Client.Stop()
-		r.logger.Println("Stop adapter")
+		r.Logger.Println("Stop adapter")
 	}
 
 	if r.scheduler != nil {
 		r.scheduler.Stop()
-		r.logger.Println("Stop job scheduler")
+		r.Logger.Println("Stop job scheduler")
 	}
 
 	close(r.workerJobs)
@@ -102,7 +102,7 @@ func (r *Robot) runLoop() {
 		case e, ok := <-errCh:
 			if ok {
 				r.aborted = true
-				r.logger.Print(e)
+				r.Logger.Print(e)
 			}
 			return
 		case msg, ok := <-receiver:
@@ -156,14 +156,14 @@ func (r *Robot) callHandler(handler Handler, msg *message.InMessage) {
 			const size = 64 << 10
 			buf := make([]byte, size)
 			buf = buf[:runtime.Stack(buf, false)]
-			r.logger.Printf("mmbot: panic handler: %v\n%s", err, buf)
+			r.Logger.Printf("mmbot: panic handler: %v\n%s", err, buf)
 		}
 	}()
 
 	if handler.CanHandle(msg) {
 		err := handler.Handle(msg)
 		if err != nil {
-			r.logger.Print(err)
+			r.Logger.Print(err)
 		}
 	}
 }
@@ -180,7 +180,7 @@ func (r *Robot) startScheduler() {
 		})
 	}
 	r.scheduler.Start()
-	r.logger.Println("Start job scheduler")
+	r.Logger.Println("Start job scheduler")
 }
 
 func (r *Robot) startServer() {
@@ -188,12 +188,12 @@ func (r *Robot) startServer() {
 	r.mountRoutes(mux)
 	r.mountClient(mux)
 
-	r.logger.Printf("Listening on %s\n", r.Config.Address())
+	r.Logger.Printf("Listening on %s\n", r.Config.Address())
 	server := &http.Server{
 		Addr:        r.Config.Address(),
 		Handler:     mux,
 		ReadTimeout: 30 * time.Second,
-		ErrorLog:    r.logger,
+		ErrorLog:    r.Logger,
 	}
 	if err := server.ListenAndServe(); err != nil {
 		r.errCh <- err
