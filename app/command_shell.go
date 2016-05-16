@@ -70,7 +70,9 @@ func (app *App) shellCommand(c *cli.Context) error {
 	robot := mmbot.NewRobot(app.Config.RobotConfig(), client, logger.Logger)
 
 	if app.InitRobot != nil {
-		app.InitRobot(robot)
+		if err := app.InitRobot(robot); err != nil {
+			return cli.NewExitError(err.Error(), 1)
+		}
 	}
 
 	sigCh := make(chan os.Signal)

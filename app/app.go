@@ -17,7 +17,7 @@ type App struct {
 	*cli.App
 	Config       *Config
 	ConfigLoader func(file string) (*Config, error)
-	InitRobot    func(*mmbot.Robot)
+	InitRobot    func(*mmbot.Robot) error
 }
 
 // NewApp creates new App.

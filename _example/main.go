@@ -36,11 +36,12 @@ func main() {
 		return &c.Config, nil
 	}
 
-	myapp.InitRobot = func(robot *mmbot.Robot) {
+	myapp.InitRobot = func(robot *mmbot.Robot) error {
 		// fmt.Printf("%#v\n", config.Example)
 		initHandlers(robot)
 		initRoutes(robot)
 		initJobs(robot)
+		return nil
 	}
 
 	if err := myapp.Run(os.Args); err != nil {
