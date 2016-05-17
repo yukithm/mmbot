@@ -11,6 +11,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +19,24 @@ import (
 	"github.com/yukithm/mmbot/adapter"
 	"github.com/yukithm/mmbot/message"
 )
+
+// SendError represents an error of sending message.
+type SendError struct {
+	Err                error
+	RatelimitLimit     int
+	RatelimitRemaining int
+	RatelimitReset     int
+	RequestID          string
+	VersionID          string
+	Date               string
+	ContentLength      int
+	ContentType        string
+	Body               string
+}
+
+func (e SendError) Error() string {
+	return e.Err.Error()
+}
 
 // Client is a client for Mattermost.
 type Client struct {
@@ -100,10 +119,10 @@ func (c *Client) Send(msg *message.OutMessage) error {
 	}
 	defer res.Body.Close()
 
-	io.Copy(ioutil.Discard, res.Body)
-	if res.StatusCode != 200 {
-		return fmt.Errorf("Failed to send a message (%d %s)",
-			res.StatusCode, res.Status)
+	if res.StatusCode == 200 {
+		io.Copy(ioutil.Discard, res.Body)
+	} else {
+		return newSendError(res)
 	}
 
 	return nil
@@ -165,4 +184,33 @@ func decodeForm(msg *InMessage, r *http.Request) error {
 	}
 
 	return nil
+}
+
+func newSendError(res *http.Response) SendError {
+	var body bytes.Buffer
+	io.Copy(&body, res.Body)
+	return SendError{
+		Err:                fmt.Errorf("Failed to send a message (%s)", res.Status),
+		RatelimitLimit:     getHeaderInt(res.Header, "X-Ratelimit-Limit"),
+		RatelimitRemaining: getHeaderInt(res.Header, "X-Ratelimit-Remaining"),
+		RatelimitReset:     getHeaderInt(res.Header, "X-Ratelimit-Reset"),
+		RequestID:          res.Header.Get("X-Request-Id"),
+		VersionID:          res.Header.Get("X-Version-Id"),
+		Date:               res.Header.Get("Date"),
+		ContentLength:      getHeaderInt(res.Header, "Content-Length"),
+		ContentType:        res.Header.Get("Content-Type"),
+		Body:               body.String(),
+	}
+}
+
+func getHeaderInt(header http.Header, key string) int {
+	value := header.Get(key)
+	if value != "" {
+		n, err := strconv.Atoi(value)
+		if err != nil {
+			return -1
+		}
+		return n
+	}
+	return -1
 }
