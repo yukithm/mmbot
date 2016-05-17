@@ -39,7 +39,7 @@ func (app *App) newConfigCommand(c *cli.Context) error {
 	}{
 		Name: c.App.Name,
 	}
-	tmpl := template.Must(template.New("config").Parse(configTemplate))
+	tmpl := template.Must(template.New("config").Parse(NewConfigTemplate))
 	if err := tmpl.Execute(file, vars); err != nil {
 		return cli.NewExitError(err.Error(), 1)
 	}
@@ -48,7 +48,10 @@ func (app *App) newConfigCommand(c *cli.Context) error {
 	return nil
 }
 
-const configTemplate = `# {{.Name}} configuration file
+// NewConfigTemplate is a template for configuration file.
+// You can change it content by adding your extra configuration entries.
+// {{.Name}} is replaced with the application name.
+var NewConfigTemplate = `# {{.Name}} configuration file
 #
 # TOML format
 # See: https://github.com/toml-lang/toml
