@@ -1,16 +1,22 @@
 package app
 
 import (
-	"io"
-	"log"
 	"os"
+	"path/filepath"
 
+	"github.com/VividCortex/godaemon"
 	"github.com/codegangsta/cli"
 )
 
 func (app *App) updateConfigByFlags(c *cli.Context) {
 	if c.IsSet("log") {
 		app.Config.Common.Log = c.String("log")
+	}
+	if c.IsSet("daemonize") {
+		app.Config.Common.daemonize = c.Bool("daemonize")
+	}
+	if c.IsSet("pidfile") {
+		app.Config.Common.PIDFile = c.String("pidfile")
 	}
 	if c.IsSet("outgoing-url") {
 		app.Config.Mattermost.OutgoingURL = c.String("outgoing-url")
@@ -44,45 +50,28 @@ func (app *App) updateConfigByFlags(c *cli.Context) {
 	}
 }
 
-// Logger is a logger that has *os.File.
-type Logger struct {
-	*log.Logger
-	file *os.File
-}
-
-// Close close the log file when it is not nil.
-func (l *Logger) Close() error {
-	if l.file != nil {
-		err := l.file.Close()
-		if err != nil {
-			return err
-		}
-		l.file = nil
-	}
-	return nil
-}
-
 func (app *App) newLogger() (*Logger, error) {
-	var file *os.File
-	var w io.Writer
+	c := app.Config.Common
+	if c.daemonize && (c.Log == "" || c.Log == "-") {
+		return NewNullLogger()
+	}
+	return NewLogger(c.Log)
+}
 
-	if app.Config.Common.Log == "" {
-		w = os.Stderr
-	} else if app.Config.Common.Log == "-" {
-		w = os.Stdout
-	} else {
-		file, err := os.OpenFile(app.Config.Common.Log, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+func absPath(file string) (string, error) {
+	if file == "" {
+		return "", nil
+	}
+
+	if !filepath.IsAbs(file) {
+		exec, err := godaemon.GetExecutablePath()
 		if err != nil {
-			return nil, err
+			return "", err
 		}
-		w = file
+		file = filepath.Join(filepath.Dir(exec), file)
 	}
 
-	logger := &Logger{
-		Logger: log.New(w, "", log.LstdFlags),
-		file:   file,
-	}
-	return logger, nil
+	return file, nil
 }
 
 func fileExists(file string) bool {

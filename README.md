@@ -13,6 +13,7 @@ Features
 - Cron like scheduler
 - Interactive shell mode for development
 - (Optional) Predefined application base object (based on [codegangsta/cli](https://github.com/codegangsta/cli))
+    - Daemonize option
 
 
 Examples

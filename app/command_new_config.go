@@ -60,6 +60,9 @@ var NewConfigTemplate = `# {{.Name}} configuration file
 # Log file path (empty: STDERR, "-": STDOUT)
 # log = "./{{.Name}}.log"
 
+# PID file path (empty: not create)
+# pidfile = "/var/run/{{.Name}}.pid"
+
 [mattermost]
 # Webhook URL for posting messages (REQUIRED)
 # (send to Mattermost; Incoming Webhooks on Mattermost side)
