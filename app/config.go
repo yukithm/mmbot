@@ -31,7 +31,10 @@ type ServerConfig struct {
 
 // CommonConfig is the configration of common category.
 type CommonConfig struct {
-	Log string `toml:"log"`
+	Log     string `toml:"log"`
+	PIDFile string `toml:"pidfile"`
+
+	daemonize bool
 }
 
 // Config is the configuration of the application.

@@ -5,6 +5,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/VividCortex/godaemon"
 	"github.com/codegangsta/cli"
 	"github.com/yukithm/mmbot"
 	"github.com/yukithm/mmbot/mmhook"
@@ -62,6 +63,14 @@ func (app *App) newRunCommand() cli.Command {
 				Name:  "log",
 				Usage: "log file",
 			},
+			cli.BoolFlag{
+				Name:  "daemonize,D",
+				Usage: "run as daemon process",
+			},
+			cli.StringFlag{
+				Name:  "pidfile",
+				Usage: "PID file path",
+			},
 		},
 		Action: app.runCommand,
 		Before: func(c *cli.Context) error {
@@ -76,6 +85,34 @@ func (app *App) newRunCommand() cli.Command {
 func (app *App) runCommand(c *cli.Context) error {
 	app.updateConfigByFlags(c)
 	app.Config.ValidateAndExitOnError()
+
+	if godaemon.Stage() == godaemon.StageParent && app.Config.Common.PIDFile != "" {
+		pid, err := NewPIDFile(app.Config.Common.PIDFile)
+		if err != nil {
+			return cli.NewExitError(err.Error(), 1)
+		}
+		if pid.Exists() {
+			return cli.NewExitError("Already running", 1)
+		}
+	}
+
+	if app.Config.Common.daemonize {
+		_, _, err := godaemon.MakeDaemon(&godaemon.DaemonAttr{})
+		if err != nil {
+			return cli.NewExitError(err.Error(), 1)
+		}
+	}
+
+	if app.Config.Common.PIDFile != "" {
+		pid, err := NewPIDFile(app.Config.Common.PIDFile)
+		if err != nil {
+			return cli.NewExitError(err.Error(), 1)
+		}
+		if err := pid.Create(); err != nil {
+			return cli.NewExitError(err.Error(), 1)
+		}
+		defer pid.Remove()
+	}
 
 	logger, err := app.newLogger()
 	if err != nil {

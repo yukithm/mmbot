@@ -7,6 +7,10 @@
 # Log file path (empty: STDERR, "-": STDOUT)
 # log = "./mmbot.log"
 
+# PID file path (empty: not create)
+# pidfile = "/var/run/mmbot.pid"
+pidfile = "./mmbot.pid"
+
 [mattermost]
 # Webhook URL for posting messages (REQUIRED)
 # (send to Mattermost; Incoming Webhooks on Mattermost side)
